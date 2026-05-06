@@ -194,7 +194,7 @@ let userProfile = {
   tier: 1,
   badges: [],
   monthly_income: 1000,
-  savings_goal: 300,
+  savings_goal: 1,
 };
 
 async function renderApp() {
@@ -434,7 +434,7 @@ function openModal(type) {
     el.style.display = 'none';
     el.textContent = '';
   });
-  
+
   if (modals[type]) modals[type].style.display = 'block';
 }
 
