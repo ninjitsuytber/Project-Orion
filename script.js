@@ -137,38 +137,6 @@ async function addXP(amount, reason = "") {
   return { xpAdded: amount, newTier, unlockedBadges };
 }
 
-//Save XP,tier
-await supabase.from('user_progress').upsert({
-  user_id: userProfile.id,
-  xp,
-  tier: newTier
-  });
-
-  userProfile.xp = xp;
-  userProfile.tier = newTier;
-
-//Badge unlock
-let unlockedBadges = [];
-
-if (newTier > oldTier) {
-  for (let t = oldTier + 1; t <= newTier; t++) {
-    const badge = BADGES.find(b => b.tierRequired === t);
-
-    if (badge) {
-      await supabase.from('user_badges').insert({
-        user_id: userProfile.id,
-        badge_id: badge.id
-      });
-
-      unlockedBadges.push(badge);
-    }
-  }
-}
-
-return { xpAdded: amount, newTier, unlockedBadges };
-
-
-
 // Modals
 const modalContainer = document.getElementById('modal-container');
 const modals = {
