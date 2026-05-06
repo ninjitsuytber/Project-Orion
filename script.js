@@ -1,6 +1,8 @@
 import { supabase } from './supabase.js';
 
 // DOM Elements
+const onboardingView = document.getElementById('onboarding-view');
+
 const loginView = document.getElementById('login-view');
 const registerView = document.getElementById('register-view');
 const mainView = document.getElementById('main-view');
@@ -175,6 +177,7 @@ const modals = {
   confirmWithdraw: document.getElementById('modal-confirm-withdraw'),
   qr: document.getElementById('modal-scan-qr'),
   goal: document.getElementById('modal-edit-goal'),
+  financials: document.getElementById('modal-update-financials'),
 };
 
 // App State
@@ -193,8 +196,11 @@ let userProfile = {
   xp: 0,
   tier: 1,
   badges: [],
+  age_range: '',
   monthly_income: 1000,
   savings_goal: 1,
+  category_budgets: { housing: 0, food: 0, transport: 0, others: 0 },
+  category_spent: { housing: 0, food: 0, transport: 0, others: 0 }
 };
 
 async function renderApp() {
@@ -203,7 +209,7 @@ async function renderApp() {
     userProfile.id = session.user.id;
     userProfile.email = session.user.email;
     userProfile.name = session.user.user_metadata.name || 'User';
-    routeTo('home');
+    await checkOnboardingAndRoute();
   } else if (!isDemo) {
     showLogin();
   }
@@ -213,11 +219,34 @@ async function renderApp() {
       userProfile.id = session.user.id;
       userProfile.email = session.user.email;
       userProfile.name = session.user.user_metadata.name || 'User';
-      routeTo('home');
+      if (_event === 'SIGNED_IN' || _event === 'INITIAL_SESSION') {
+         await checkOnboardingAndRoute();
+      }
     } else if (!isDemo) {
       showLogin();
     }
   });
+}
+
+async function checkOnboardingAndRoute() {
+  if (isDemo) return; 
+  
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', userProfile.id)
+      .maybeSingle();
+
+    if (profile) {
+      routeTo('home');
+    } else {
+      showOnboarding();
+    }
+  } catch (err) {
+    console.error("Routing error:", err);
+    routeTo('home'); 
+  }
 }
 
 // Data Syncing
@@ -238,6 +267,16 @@ async function syncUserData() {
       userProfile.saving_balance = Number(profile.saving_balance) || 0;
       userProfile.streak = Number(profile.streak) || 0;
       userProfile.savings_goal = Number(profile.savings_goal) || 300;
+      userProfile.monthly_income = Number(profile.monthly_income) || 0; // NEW
+      userProfile.age_range = profile.age_range || '';
+      if (userProfile.monthly_income > 0) {
+        userProfile.category_budgets = {
+          housing: userProfile.monthly_income * 0.30,
+          food: userProfile.monthly_income * 0.20,
+          transport: userProfile.monthly_income * 0.15,
+          others: userProfile.monthly_income * 0.15
+        };
+      }
     } else {
       // Create profile if doesn't exist
       const { data: newProfile } = await supabase
@@ -311,6 +350,20 @@ function renderTransactions(transactions) {
   }).join('');
 }
 
+function updateCategoriesUI() {
+  if (!userProfile.category_budgets) return;
+
+  const cats = ['food', 'transport', 'housing', 'others'];
+  cats.forEach(cat => {
+    const budget = userProfile.category_budgets[cat] || 0;
+    const spent = userProfile.category_spent[cat] || 0;
+    const left = Math.max(0, budget - spent);
+
+    updateText(`cat-${cat}-left`, left.toFixed(2));
+    updateText(`cat-${cat}-total`, budget.toFixed(2));
+  });
+}
+
 // Financial Logic & Spending Ring
 async function updateDashboard() {
   await syncUserData();
@@ -318,6 +371,7 @@ async function updateDashboard() {
   updateSpendingRing();
   updateSavingJar();
   updateRewardsUI();
+  updateCategoriesUI();
   initActivityTabs();
 }
 
@@ -409,6 +463,12 @@ function hideAllViews() {
   loginView.style.display = 'none';
   registerView.style.display = 'none';
   mainView.style.display = 'none';
+  if (onboardingView) onboardingView.style.display = 'none';
+}
+
+function showOnboarding() {
+  hideAllViews();
+  onboardingView.style.display = 'flex';
 }
 
 function hideAllPages() {
@@ -855,7 +915,7 @@ document.getElementById('btn-demo-login')?.addEventListener('click', () => {
   userProfile.email = 'demo@projectorion.test';
   userProfile.balance = 1000;
   userProfile.saving_balance = 0;
-  routeTo('home');
+  showOnboarding();
 });
 
 // Auth Switch Listeners
@@ -910,7 +970,7 @@ document.getElementById('register-form')?.addEventListener('submit', async (e) =
         errorEl.style.display = 'block';
       }
     } else {
-      showLogin();
+      showOnboarding();
     }
   } catch (err) {
     if (errorEl) {
@@ -923,8 +983,9 @@ document.getElementById('register-form')?.addEventListener('submit', async (e) =
 // Logout Listener
 document.getElementById('btn-logout')?.addEventListener('click', async () => {
   isDemo = false;
+  userProfile.id = null;
   await supabase.auth.signOut();
-  showLogin();
+  window.location.reload();
 });
 
 // Financial Listeners
@@ -994,6 +1055,89 @@ document.getElementById('edit-goal-form')?.addEventListener('submit', async(e) =
   } else {
     alert('Please enter a valid goal amount.');
   }
-})
+});
+
+document.getElementById('onboarding-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const ageVal = document.getElementById('onboarding-age').value;
+  const salaryVal = parseInt(document.getElementById('onboarding-salary').value);
+
+  // Financial Rule
+  const savingsTarget = salaryVal * 0.20;
+  
+  userProfile.monthly_income = salaryVal;
+  userProfile.savings_goal = savingsTarget;
+  userProfile.category_budgets = {
+    housing: salaryVal * 0.30,
+    food: salaryVal * 0.20,
+    transport: salaryVal * 0.15,
+    others: salaryVal * 0.15
+  };
+
+  // Assign mock spent values based on today's total spent for UI demonstration
+  const spent = userProfile.spent_today || 0;
+  userProfile.category_spent = {
+    housing: 0,
+    food: spent * 0.5,
+    transport: spent * 0.3,
+    others: spent * 0.2
+  };
+
+  // Sync the newly collected profile data to Supabase
+  if (!isDemo && userProfile.id) {
+    await supabase.from('profiles').upsert({
+      id: userProfile.id,
+      name: userProfile.name,
+      email: userProfile.email,
+      balance: 0,
+      saving_balance: 0,
+      streak: 0,
+      age_range: ageVal,
+      monthly_income: salaryVal,
+      savings_goal: savingsTarget
+    });
+  };
+  routeTo('home');
+});
+
+document.getElementById('btn-update-financials')?.addEventListener('click', () => {
+  document.getElementById('update-age').value = userProfile.age_range || '';
+  document.getElementById('update-salary').value = userProfile.monthly_income || '';
+  openModal('financials');
+});
+
+document.getElementById('update-financials-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const ageVal = document.getElementById('update-age').value;
+  const salaryVal = parseInt(document.getElementById('update-salary').value);
+  const savingsTarget = salaryVal * 0.20;
+
+  userProfile.age_range = ageVal;
+  userProfile.monthly_income = salaryVal;
+  userProfile.savings_goal = savingsTarget;
+  userProfile.category_budgets = {
+    housing: salaryVal * 0.30,
+    food: salaryVal * 0.20,
+    transport: salaryVal * 0.15,
+    others: salaryVal * 0.15
+  };
+
+  if (!isDemo && userProfile.id) {
+    const { error } = await supabase.from('profiles').update({
+      age_range: ageVal,
+      monthly_income: salaryVal,
+      savings_goal: savingsTarget
+    }).eq('id', userProfile.id);
+
+    if (error) {
+      alert('Error updating profile: ' + error.message);
+      return;
+    }
+  }
+
+  updateDashboard();
+  closeModal();
+  alert('Your financial profile has been updated!');
+});
 
 renderApp();
