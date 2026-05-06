@@ -890,6 +890,16 @@
       <div id="withdraw-money-error" class="error-msg"></div>
     </div>
 
+    <!-- Confirm Withdraw Modal -->
+    <div id="modal-confirm-withdraw" class="modal-content auth-box" style="display: none;">
+      <h2>Confirm Withdraw</h2>
+      <p id="confirm-withdraw-text" style="color: var(--text-secondary); margin-bottom: 1.5rem;"></p>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button type="button" id="btn-confirm-withdraw-yes" class="auth-btn">Yes, Withdraw</button>
+        <button type="button" class="auth-btn secondary-btn close-modal" style="background: var(--bg-panel-light);">Cancel</button>
+      </div>
+    </div>
+
     <!-- QR Scanner Modal -->
     <div id="modal-scan-qr" class="modal-content auth-box" style="display: none;">
       <h2>Scan QR</h2>
