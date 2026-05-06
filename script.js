@@ -429,6 +429,12 @@ function updateNav(activeId) {
 function openModal(type) {
   modalContainer.style.display = 'flex';
   Object.values(modals).forEach(m => m.style.display = 'none');
+
+  document.querySelectorAll('.error-msg').forEach((el) => {
+    el.style.display = 'none';
+    el.textContent = '';
+  });
+  
   if (modals[type]) modals[type].style.display = 'block';
 }
 
@@ -467,6 +473,9 @@ async function addMoney(amount, bank) {
 }
 
 async function sendMoney(email, amount) {
+  const errorEl = document.getElementById('send-money-error');
+  if (errorEl) errorEl.style.display = 'none';
+
   if (isNaN(amount) || amount <= 0) {
     showError('send-money-error', 'Please enter a valid amount greater than zero');
     return;
@@ -510,6 +519,9 @@ async function sendMoney(email, amount) {
 }
 
 async function saveMoney(amount) {
+  const errorEl = document.getElementById('save-money-error');
+  if (errorEl) errorEl.style.display = 'none';
+
   if (isNaN(amount) || amount <= 0) {
     showError('save-money-error', 'Please enter a valid amount greater than zero');
     return;
