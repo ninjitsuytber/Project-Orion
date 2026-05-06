@@ -174,6 +174,7 @@ const modals = {
   withdraw: document.getElementById('modal-withdraw-money'),
   confirmWithdraw: document.getElementById('modal-confirm-withdraw'),
   qr: document.getElementById('modal-scan-qr'),
+  goal: document.getElementById('modal-edit-goal'),
 };
 
 // App State
@@ -236,6 +237,7 @@ async function syncUserData() {
       userProfile.balance = Number(profile.balance) || 0;
       userProfile.saving_balance = Number(profile.saving_balance) || 0;
       userProfile.streak = Number(profile.streak) || 0;
+      userProfile.savings_goal = Number(profile.savings_goal) || 300;
     } else {
       // Create profile if doesn't exist
       const { data: newProfile } = await supabase
@@ -363,6 +365,15 @@ function updateSavingJar() {
   }
 
   const jarSrc = `assets/jar/${stage}.svg`;
+
+  const targetLabel = document.querySelector('.jar-target');
+  if (targetLabel) targetLabel.textContent = `Goal: RM ${userProfile.savings_goal}`;
+
+  const targetLarge = document.querySelector('.jar-target-large');
+  if (targetLarge) targetLarge.textContent = `Goal: RM ${userProfile.savings_goal}`;
+
+  updateText('jar-pct',`${Math.round(percentage)}%`);
+  updateText('detail-jar-pct',`${Math.round(percentage)}%`);
 
   const jarImg = document.getElementById('saving-jar-img');
   if (jarImg) jarImg.src = jarSrc;
@@ -563,9 +574,6 @@ function withdrawMoney(amount) {
   openModal('confirmWithdraw');
 }
 
-// const confirmWithdraw = confirm(`Are you sure you want to withdraw RM ${amount.toFixed(2)} from your jar?`);
-// if (!confirmWithdraw) return;
-
 async function processWithdraw() {
   const amount = pendingWithdrawAmount;
   if (amount <= 0) return;
@@ -605,6 +613,27 @@ async function processWithdraw() {
 
     updateDashboard();
     closeModal();
+  }
+}
+
+async function updateSavingGoal(newGoal) {
+  if (isDemo) {
+    userProfile.savings_goal = newGoal;
+    updateDashboard();
+    return;
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({savings_goal: newGoal})
+    .eq('id', userProfile.id);
+  
+  if (!error) {
+    userProfile.savings_goal = newGoal;
+    updateDashboard();
+    alert('Goal updated successfully!');
+  } else {
+    console.error('Error updating goal:',error.message)
   }
 }
 
@@ -810,5 +839,22 @@ document.getElementById('balance-toggle-btn')?.addEventListener('click', () => {
   isBalanceHidden = !isBalanceHidden;
   updateBalanceUI();
 });
+
+document.getElementById('btn-open-goal-modal')?.addEventListener('click',() => {
+  document.getElementById('input-savings-goal').value = userProfile.savings_goal;
+  openModal('goal');
+});
+
+document.getElementById('edit-goal-form')?.addEventListener('submit', async(e) => {
+  e.preventDefault();
+  const newGoal = parseFloat(document.getElementById('input-savings-goal').value);
+
+  if (newGoal > 0) {
+    await updateSavingGoal(newGoal);
+    closeModal();
+  } else {
+    alert('Please enter a valid goal amount.');
+  }
+})
 
 renderApp();
