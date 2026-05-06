@@ -17,6 +17,158 @@ const navItems = {
   me: document.getElementById('nav-me'),
 };
 
+//Tiers
+const TIERS = [
+  { tier: 1, name: "No Money No Talk", xpRequired: 0 },
+  { tier: 2, name: "Coin Sniffer", xpRequired: 100 },
+  { tier: 3, name: "One Ringgit Millionaire", xpRequired: 250 },
+  { tier: 4, name: "Sikit-Sikit Jadi Bukit", xpRequired: 500 },
+  { tier: 5, name: "Wallet Protector", xpRequired: 800 },
+  { tier: 6, name: "Bajet Survivalist", xpRequired: 1200 },
+  { tier: 7, name: "Cha Ching Apprentice", xpRequired: 1700 },
+  { tier: 8, name: "Tabung Boss", xpRequired: 2300 },
+  { tier: 9, name: "Lowkey Kaya", xpRequired: 3000 },
+  { tier: 10, name: "Sultan Simpanan", xpRequired: 4000 }
+];
+
+//Badges
+const BADGES = [
+  { id: "b1", name: "No Money No Talk", tierRequired: 1, img: "assets/badges/b1.png" },
+  { id: "b2", name: "Coin Sniffer", tierRequired: 2, img: "assets/badges/b2.png" },
+  { id: "b3", name: "One Ringgit Millionaire", tierRequired: 3, img: "assets/badges/b3.png" },
+  { id: "b4", name: "Sikit-Sikit Jadi Bukit", tierRequired: 4, img: "assets/badges/b4.png" },
+  { id: "b5", name: "Wallet Protector", tierRequired: 5, img: "assets/badges/b5.png" },
+  { id: "b6", name: "Bajet Survivalist", tierRequired: 6, img: "assets/badges/b6.png" },
+  { id: "b7", name: "Cha Ching Apprentice", tierRequired: 7, img: "assets/badges/b7.png" },
+  { id: "b8", name: "Tabung Boss", tierRequired: 8, img: "assets/badges/b8.png" },
+  { id: "b9", name: "Lowkey Kaya", tierRequired: 9, img: "assets/badges/b9.png" },
+  { id: "b10", name: "Sultan Simpanan", tierRequired: 10, img: "assets/badges/b10.png" }
+];
+
+//Tier Update
+function calculateTier(xp) {
+  let tier = 1;
+
+  for (let i = TIERS.length - 1; i >= 0; i--) {
+    if (xp >= TIERS[i].xpRequired) {
+      tier = TIERS[i].tier;
+      break;
+    }
+  }
+
+  return tier;
+}
+
+//Badge Unlock
+function unlockBadge(tier) {
+  const badge = BADGES.find(b => Number(b.tierRequired) === Number(tier));
+
+  if (!badge) return null;
+
+  if (!userProfile.badges.includes(badge.id)) {
+    userProfile.badges.push(badge.id);
+    console.log("Congratulations! Badge Unlocked:", badge.name);
+    return badge;
+  }
+
+  return null;
+}
+
+//Add XP
+async function addXP(amount, reason = "") {
+  const oldTier = userProfile.tier;
+
+  //Add xp and find new tier
+  userProfile.xp += amount;
+  const newTier = calculateTier(userProfile.xp);
+  userProfile.tier = newTier;
+
+  //Badge update
+  let unlockedBadges = [];
+
+  if (newTier > oldTier) {
+    for (let t = oldTier + 1; t <= newTier; t++) {
+      const badge = BADGES.find(b => Number(b.tierRequired) === Number(t));
+
+      if (badge && !userProfile.badges.includes(badge.id)) {
+        userProfile.badges.push(badge.id);
+        unlockedBadges.push(badge);
+      }
+    }
+  }
+
+  //Demo
+  if (isDemo) {
+    return { xpAdded: amount, newTier, unlockedBadges };
+  }
+
+  //Supabase Sync
+  try {
+    const { data } = await supabase
+      .from('user_progress')
+      .select('*')
+      .eq('user_id', userProfile.id)
+      .maybeSingle();
+
+    const xp = (data?.xp || 0) + amount;
+    const dbOldTier = data?.tier || 1;
+    const dbNewTier = calculateTier(xp);
+
+    await supabase.from('user_progress').upsert({
+      user_id: userProfile.id,
+      xp,
+      tier: dbNewTier
+    });
+
+    // Insert new badges into DB 
+    if (dbNewTier > dbOldTier) {
+      for (const badge of unlockedBadges) {
+        await supabase.from('user_badges').insert({
+          user_id: userProfile.id,
+          badge_id: badge.id
+        });
+      }
+    }
+
+  } catch (err) {
+    console.error("addXP sync error:", err);
+  }
+
+  return { xpAdded: amount, newTier, unlockedBadges };
+}
+
+//Save XP,tier
+await supabase.from('user_progress').upsert({
+  user_id: userProfile.id,
+  xp,
+  tier: newTier
+  });
+
+  userProfile.xp = xp;
+  userProfile.tier = newTier;
+
+//Badge unlock
+let unlockedBadges = [];
+
+if (newTier > oldTier) {
+  for (let t = oldTier + 1; t <= newTier; t++) {
+    const badge = BADGES.find(b => b.tierRequired === t);
+
+    if (badge) {
+      await supabase.from('user_badges').insert({
+        user_id: userProfile.id,
+        badge_id: badge.id
+      });
+
+      unlockedBadges.push(badge);
+    }
+  }
+}
+
+return { xpAdded: amount, newTier, unlockedBadges };
+
+
+
 // Modals
 const modalContainer = document.getElementById('modal-container');
 const modals = {
@@ -41,6 +193,9 @@ let userProfile = {
   spent_today: 0,
   saved_today: 0,
   streak: 0,
+  xp: 0,
+  tier: 1,
+  badges: [],
   monthly_income: 1000,
   savings_goal: 300,
 };
@@ -381,7 +536,6 @@ async function saveMoney(amount) {
       amount,
       description: 'Saved to Money Jar'
     }]);
-    
     // Log App Activity (XP)
     await supabase.from('app_activities').insert([{
       user_id: userProfile.id,
