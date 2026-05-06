@@ -79,19 +79,14 @@ function unlockBadge(tier) {
 //Add XP
 async function addXP(amount, reason = "") {
   const oldTier = userProfile.tier;
-
-  //Add xp and find new tier
   userProfile.xp += amount;
   const newTier = calculateTier(userProfile.xp);
   userProfile.tier = newTier;
 
-  //Badge update
   let unlockedBadges = [];
-
   if (newTier > oldTier) {
     for (let t = oldTier + 1; t <= newTier; t++) {
-      const badge = BADGES.find(b => Number(b.tierRequired) === Number(t));
-
+      const badge = BADGES.find(b => b.tierRequired === t);
       if (badge && !userProfile.badges.includes(badge.id)) {
         userProfile.badges.push(badge.id);
         unlockedBadges.push(badge);
@@ -99,69 +94,35 @@ async function addXP(amount, reason = "") {
     }
   }
 
-  //Demo
   if (isDemo) {
     return { xpAdded: amount, newTier, unlockedBadges };
   }
 
-  //Supabase Sync
   try {
-    const { data } = await supabase
-      .from('user_progress')
-      .select('*')
-      .eq('user_id', userProfile.id)
-      .maybeSingle();
-
-    const xp = (data?.xp || 0) + amount;
-    const dbOldTier = data?.tier || 1;
-    const dbNewTier = calculateTier(xp);
-
+    // 1. Update Progress
     await supabase.from('user_progress').upsert({
       user_id: userProfile.id,
-      xp,
-      tier: dbNewTier
+      xp: userProfile.xp,
+      tier: newTier
     });
 
-    // Insert new badges into DB 
-    if (dbNewTier > dbOldTier) {
-      for (const badge of unlockedBadges) {
-        await supabase.from('user_badges').insert({
-          user_id: userProfile.id,
-          badge_id: badge.id
-        });
-      }
+    // 2. Insert new badges into DB 
+    for (const badge of unlockedBadges) {
+      await supabase.from('user_badges').insert({
+        user_id: userProfile.id,
+        badge_id: badge.id
+      });
     }
+
+    // 3. Log Activity
+    await supabase.from('app_activities').insert([{
+      user_id: userProfile.id,
+      activity_name: reason,
+      xp_earned: amount
+    }]);
 
   } catch (err) {
     console.error("addXP sync error:", err);
-  }
-
-  // Save XP, tier
-  await supabase.from('user_progress').upsert({
-    user_id: userProfile.id,
-    xp: userProfile.xp,
-    tier: newTier
-  });
-
-  userProfile.xp = userProfile.xp;
-  userProfile.tier = newTier;
-
-  // Badge unlock
-  if (newTier > oldTier) {
-    for (let t = oldTier + 1; t <= newTier; t++) {
-      const badge = BADGES.find(b => b.tierRequired === t);
-
-      if (badge) {
-        await supabase.from('user_badges').insert({
-          user_id: userProfile.id,
-          badge_id: badge.id
-        });
-
-        if (!unlockedBadges.find(ub => ub.id === badge.id)) {
-          unlockedBadges.push(badge);
-        }
-      }
-    }
   }
 
   return { xpAdded: amount, newTier, unlockedBadges };
@@ -195,7 +156,7 @@ let userProfile = {
   streak: 0,
   xp: 0,
   tier: 1,
-  badges: [],
+  badges: ['b1'],
   age_range: '',
   monthly_income: 1000,
   savings_goal: 1,
@@ -255,7 +216,7 @@ async function syncUserData() {
   if (!userProfile.id) return;
 
   try {
-    // 1. Fetch Profile (Balance)
+    // 1. Fetch Profile (Balance, Streak)
     let { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
@@ -291,7 +252,35 @@ async function syncUserData() {
       }
     }
 
-    // 2. Fetch Today's Spendings & Savings
+    // 2. Fetch Progress (XP, Tier)
+    const { data: progress } = await supabase
+      .from('user_progress')
+      .select('*')
+      .eq('user_id', userProfile.id)
+      .maybeSingle();
+
+    if (progress) {
+      userProfile.xp = Number(progress.xp) || 0;
+      userProfile.tier = calculateTier(userProfile.xp);
+    } else {
+      // Initialize progress if not found
+      await supabase.from('user_progress').insert([{ user_id: userProfile.id, xp: 0, tier: 1 }]);
+      userProfile.xp = 0;
+      userProfile.tier = 1;
+    }
+
+    // 3. Fetch Badges
+    const { data: badges } = await supabase
+      .from('user_badges')
+      .select('badge_id')
+      .eq('user_id', userProfile.id);
+    
+    userProfile.badges = badges?.map(b => b.badge_id) || ['b1'];
+    if (!userProfile.badges.includes('b1')) {
+      userProfile.badges.unshift('b1');
+    }
+
+    // 4. Fetch Today's Spendings & Savings
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const { data: todayTxs } = await supabase
@@ -300,10 +289,10 @@ async function syncUserData() {
       .eq('user_id', userProfile.id)
       .gte('created_at', today.toISOString());
 
-    userProfile.spent_today = todayTxs?.filter(tx => tx.type === 'send').reduce((sum, tx) => sum + Number(tx.amount), 0) || 0;
+    userProfile.spent_today = todayTxs?.filter(tx => tx.type === 'send' || tx.type === 'spend').reduce((sum, tx) => sum + Number(tx.amount), 0) || 0;
     userProfile.saved_today = todayTxs?.filter(tx => tx.type === 'save').reduce((sum, tx) => sum + Number(tx.amount), 0) || 0;
 
-    // 3. Fetch Transactions for Activity Log
+    // 5. Fetch Transactions for Activity Log
     const { data: transactions } = await supabase
       .from('transactions')
       .select('*')
@@ -376,9 +365,29 @@ async function updateDashboard() {
 }
 
 function updateRewardsUI() {
-  const streakEl = document.querySelector('.rw-stat-value');
-  if (streakEl && !isDemo) {
-    streakEl.textContent = `${userProfile.streak} Days`;
+  // Sync Rewards Page Stats
+  updateText('rw-streak-val', `${userProfile.streak} Days`);
+  updateText('rw-total-xp', `${userProfile.xp} XP`);
+  
+  const currentBadge = BADGES.find(b => b.tierRequired === userProfile.tier) || BADGES[0];
+  const badgeImg = document.getElementById('rw-current-badge-img');
+  if (badgeImg) badgeImg.src = currentBadge.img;
+  updateText('rw-badge-name', currentBadge.name);
+
+  // Sync Home Page Rewards Widget
+  const homeGiftBoxes = document.getElementById('home-gift-boxes');
+  if (homeGiftBoxes) {
+    const boxes = homeGiftBoxes.querySelectorAll('.gift-box');
+    boxes.forEach((box, index) => {
+      const label = box.querySelector('.gift-label');
+      if (index === 0) {
+        label.textContent = `${userProfile.streak} Day Streak`;
+      } else if (index === 1) {
+        label.textContent = currentBadge.name;
+      } else if (index === 2) {
+        label.textContent = `${userProfile.xp} Total XP`;
+      }
+    });
   }
 }
 
@@ -772,15 +781,10 @@ function initActivityTabs() {
   });
 }
 
-/**
- * Initializes a wave animation background for a specific container.
- * @param {string} selector - The CSS selector for the container (e.g., '.spending-visual-container')
- */
 function initWaveAnimation(selector) {
     const container = document.querySelector(selector);
     if (!container) return;
 
-    // Create and append canvas if it doesn't exist
     let canvas = container.querySelector('canvas');
     if (!canvas) {
         canvas = document.createElement('canvas');
@@ -789,13 +793,12 @@ function initWaveAnimation(selector) {
 
     const ctx = canvas.getContext('2d');
 
-    // Internal state and parameters
     const params = {
-        AMPLITUDE_WAVES: 0,
-        AMPLITUDE_MIDDLE: 0,
-        AMPLITUDE_SIDES: 0,
-        OFFSET_SPEED: 120,
-        SPEED: 3,
+        AMPLITUDE_WAVES: 25,
+        AMPLITUDE_MIDDLE: 15,
+        AMPLITUDE_SIDES: 15,
+        OFFSET_SPEED: 100,
+        SPEED: 1.2,
         OFFSET_WAVES: 35,
         NUMBER_WAVES: 3,
         COLOR: '#032bac',
@@ -803,7 +806,7 @@ function initWaveAnimation(selector) {
         OFFSET_CURVE: true
     };
 
-    const wavesOpacities = [0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1];
+    const wavesOpacities = [0.6, 0.4, 0.25]; 
     let speedInc = 0;
     let gradient;
 
@@ -820,34 +823,29 @@ function initWaveAnimation(selector) {
         canvas.width = container.clientWidth;
         canvas.height = container.clientHeight;
         
-        params.AMPLITUDE_WAVES = canvas.height;
-        params.AMPLITUDE_MIDDLE = canvas.height / 3;
-        params.AMPLITUDE_SIDES = canvas.height / 2;
-
         let rgb = hexToRgb(params.COLOR);
         gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
         gradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
-        gradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 1)`);
+        gradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.9)`);
     };
 
     const render = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        const verticalBaseline = canvas.height * 0.55; 
+
         for (let j = params.NUMBER_WAVES - 1; j >= 0; j--) {
             let offset = speedInc + j * Math.PI * params.OFFSET_WAVES;
 
-            if (j === 0) {
-                ctx.fillStyle = gradient;
-            } else {
-                ctx.fillStyle = params.COLOR;
-            }
+            ctx.fillStyle = (j === 0) ? gradient : params.COLOR;
             ctx.globalAlpha = wavesOpacities[j];
 
-            let leftRange = ((Math.sin((offset / params.OFFSET_SPEED) + 2) + 1) / 2 * params.AMPLITUDE_SIDES) + (canvas.height - params.AMPLITUDE_SIDES) / 2;
-            let rightRange = ((Math.sin((offset / params.OFFSET_SPEED) + 2) + 1) / 2 * params.AMPLITUDE_SIDES) + (canvas.height - params.AMPLITUDE_SIDES) / 2;
-            let leftCurveRange = (Math.sin((offset / params.OFFSET_SPEED) + 2) + 1) / 2 * params.AMPLITUDE_WAVES + (canvas.height - params.AMPLITUDE_WAVES) / 2;
-            let rightCurveRange = (Math.sin((offset / params.OFFSET_SPEED) + 1) + 1) / 2 * params.AMPLITUDE_WAVES + (canvas.height - params.AMPLITUDE_WAVES) / 2;
-            let endCurveRange = ((Math.sin((offset / params.OFFSET_SPEED) + 2) + 1) / 2 * params.AMPLITUDE_MIDDLE) + (canvas.height - params.AMPLITUDE_MIDDLE) / 2;
+            let leftRange = verticalBaseline;
+            let rightRange = verticalBaseline;
+            
+            let leftCurveRange = verticalBaseline - (Math.sin((offset / params.OFFSET_SPEED) + 1.5) * params.AMPLITUDE_WAVES);
+            let rightCurveRange = verticalBaseline - (Math.cos((offset / params.OFFSET_SPEED) + 0.5) * params.AMPLITUDE_WAVES);
+            let endCurveRange = verticalBaseline + (Math.sin((offset / (params.OFFSET_SPEED * 1.5))) * params.AMPLITUDE_MIDDLE);
 
             let reverseLeftCurveRange = endCurveRange - rightCurveRange + endCurveRange;
             let reverseRightCurveRange = endCurveRange - leftCurveRange + endCurveRange;
@@ -891,13 +889,12 @@ function initWaveAnimation(selector) {
         requestAnimationFrame(render);
     };
 
-    // Event Listeners and initialization
     window.addEventListener('resize', resize);
     resize();
     render();
 }
 
-initWaveAnimation('.spending-visual-container');
+initWaveAnimation('.spending-card');
 // Navigation Listeners
 document.getElementById('nav-brand')?.addEventListener('click', () => routeTo('home'));
 navItems.home?.addEventListener('click', () => routeTo('home'));

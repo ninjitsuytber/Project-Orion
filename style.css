@@ -295,24 +295,29 @@ body {
   border: 1px solid var(--border-light);
 }
 
+.spending-card {
+  position: relative;
+  overflow: hidden;
+}
+
 .spending-visual-container {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
   margin: 1.5rem 0;
-  overflow:hidden;
-  position:relative;
+  position: relative;
+  z-index: 1;
 }
 
 .wave-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0;         /* Keep it behind text/buttons */
-    pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 0;
+  pointer-events: none;
 }
 
 .progress-ring-v2 {
