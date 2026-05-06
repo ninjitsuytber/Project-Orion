@@ -849,6 +849,15 @@
           <option value="cimb">CIMB Clicks</option>
           <option value="pbb">Public Bank</option>
           <option value="rhb">RHB Now</option>
+          <option value="hongleong">Hong Leong Bank</option>
+          <option value="ambank">AmBank</option>
+          <option value="bankislam">Bank Islam</option>
+          <option value="bsn">BSN</option>
+          <option value="uob">UOB Malaysia</option>
+          <option value="ocbc">OCBC Bank</option>
+          <option value="hsbc">HSBC Malaysia</option>
+          <option value="tng">Touch 'n Go eWallet</option>
+          <option value="ryt">Ryt Bank</option>
         </select>
         <button type="submit" class="auth-btn">Proceed to Bank</button>
         <button type="button" class="auth-btn secondary-btn close-modal"
@@ -862,6 +871,18 @@
       <form id="send-money-form" class="auth-form">
         <input type="email" id="send-email" class="auth-input" placeholder="Recipient Email" required>
         <input type="number" id="send-amount" class="auth-input" placeholder="Amount (RM)" step="0.01" min="0.01" required>
+        <select id="send-category" class="auth-input" required style="appearance: none; background: rgba(0,0,0,0.2);">
+          <option value="" disabled selected>Select Category</option>
+          <option value="food">Food and Beverage</option>
+          <option value="transport">Transport</option>
+          <option value="entertainment">Entertainment</option>
+          <option value="grocery">Grocery</option>
+          <option value="garment">Garment</option>
+          <option value="telco">Telco</option>
+          <option value="insurance">Insurance</option>
+          <option value="education">Education</option>
+          <option value="others">Others</option>
+        </select>
         <button type="submit" class="auth-btn">Send Now</button>
         <button type="button" class="auth-btn secondary-btn close-modal"
           style="background: var(--bg-panel-light); margin-top: 8px;">Cancel</button>
