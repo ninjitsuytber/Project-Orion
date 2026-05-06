@@ -274,6 +274,10 @@ function closeModal() {
 
 // Financial Actions
 async function addMoney(amount, bank) {
+  if (isNaN(amount) || amount <= 0) {
+    alert('Please enter a valid amount greater than zero.');
+    return;
+  }
   if (isDemo) {
     userProfile.balance += amount;
     updateDashboard();
@@ -299,6 +303,10 @@ async function addMoney(amount, bank) {
 }
 
 async function sendMoney(email, amount) {
+  if (isNaN(amount) || amount <= 0) {
+    showError('send-money-error', 'Please enter a valid amount greater than zero');
+    return;
+  }
   if (amount > userProfile.balance) {
     showError('send-money-error', 'Insufficient balance');
     return;
@@ -338,6 +346,10 @@ async function sendMoney(email, amount) {
 }
 
 async function saveMoney(amount) {
+  if (isNaN(amount) || amount <= 0) {
+    showError('save-money-error', 'Please enter a valid amount greater than zero');
+    return;
+  }
   if (amount > userProfile.balance) {
     showError('save-money-error', 'Insufficient balance');
     return;
@@ -381,6 +393,10 @@ async function saveMoney(amount) {
 }
 
 async function withdrawMoney(amount) {
+  if (isNaN(amount) || amount <= 0) {
+    showError('withdraw-money-error', 'Please enter a valid amount greater than zero');
+    return;
+  }
   if (amount > userProfile.saving_balance) {
     showError('withdraw-money-error', 'Insufficient jar balance');
     return;

@@ -835,7 +835,7 @@
     <div id="modal-add-money" class="modal-content auth-box" style="display: none;">
       <h2>Add Money</h2>
       <form id="add-money-form" class="auth-form">
-        <input type="number" id="add-amount" class="auth-input" placeholder="Amount (RM)" step="0.01" required>
+        <input type="number" id="add-amount" class="auth-input" placeholder="Amount (RM)" step="0.01" min="0.01" required>
         <select id="bank-select" class="auth-input" required style="appearance: none; background: rgba(0,0,0,0.2);">
           <option value="" disabled selected>Select Bank</option>
           <option value="maybank">Maybank2u</option>
@@ -854,7 +854,7 @@
       <h2>Send Money</h2>
       <form id="send-money-form" class="auth-form">
         <input type="email" id="send-email" class="auth-input" placeholder="Recipient Email" required>
-        <input type="number" id="send-amount" class="auth-input" placeholder="Amount (RM)" step="0.01" required>
+        <input type="number" id="send-amount" class="auth-input" placeholder="Amount (RM)" step="0.01" min="0.01" required>
         <button type="submit" class="auth-btn">Send Now</button>
         <button type="button" class="auth-btn secondary-btn close-modal"
           style="background: var(--bg-panel-light); margin-top: 8px;">Cancel</button>
@@ -868,7 +868,7 @@
       <form id="save-money-form" class="auth-form">
         <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">Move money from your balance to
           your saving jar.</p>
-        <input type="number" id="save-amount" class="auth-input" placeholder="Amount (RM)" step="0.01" required>
+        <input type="number" id="save-amount" class="auth-input" placeholder="Amount (RM)" step="0.01" min="0.01" required>
         <button type="submit" class="auth-btn">Save Money</button>
         <button type="button" class="auth-btn secondary-btn close-modal"
           style="background: var(--bg-panel-light); margin-top: 8px;">Cancel</button>
@@ -882,7 +882,7 @@
       <form id="withdraw-money-form" class="auth-form">
         <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">Transfer funds back to your
           account balance.</p>
-        <input type="number" id="withdraw-amount" class="auth-input" placeholder="Amount (RM)" step="0.01" required>
+        <input type="number" id="withdraw-amount" class="auth-input" placeholder="Amount (RM)" step="0.01" min="0.01" required>
         <button type="submit" class="auth-btn">Withdraw Now</button>
         <button type="button" class="auth-btn secondary-btn close-modal"
           style="background: var(--bg-panel-light); margin-top: 8px;">Cancel</button>
