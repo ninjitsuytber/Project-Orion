@@ -686,12 +686,15 @@
                     <div id="detail-milestone-fill" class="progress-fill" style="width: 0%"></div>
                   </div>
                 </div>
-                <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 1rem;">
+                <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 0.8rem; flex-wrap: wrap;">
                   <button class="auth-btn" id="btn-save-in-detail"
-                    style="padding: 0.6rem 0; width: 120px; font-size: 0.9rem;">Save In</button>
+                    style="padding: 0.6rem 0; width: 110px; font-size: 0.9rem;">Save In</button>
                   <button class="auth-btn secondary-btn" id="btn-withdraw-detail"
-                    style="padding: 0.6rem 0; width: 120px; font-size: 0.9rem; background: var(--bg-panel-light); border: 1px solid var(--accent-primary);">Withdraw</button>
-                </div>              </div>
+                    style="padding: 0.6rem 0; width: 110px; font-size: 0.9rem; background: var(--bg-panel-light); border: 1px solid var(--accent-primary);">Withdraw</button>
+                  <button class="auth-btn secondary-btn" id="btn-open-goal-modal"
+                    style="padding: 0.6rem 0; width: 228px; font-size: 0.9rem; background: var(--bg-panel-light); border: 1px solid var(--accent-primary);">Customize Your Goal</button>
+                </div>
+              </div>
             </div>
           </div>
         </main>
@@ -898,6 +901,19 @@
         <button type="button" id="btn-confirm-withdraw-yes" class="auth-btn">Yes, Withdraw</button>
         <button type="button" class="auth-btn secondary-btn close-modal" style="background: var(--bg-panel-light);">Cancel</button>
       </div>
+    </div>
+
+    <!-- Modal Edit Modal -->
+    <div id="modal-edit-goal" class="modal-content auth-box" style="display: none;">
+      <h2>Set Savings Goal</h2>
+      <form id="edit-goal-form" class="auth-form">
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+          Enter your new monthly savings target.
+        </p>
+        <input type="number" id="input-savings-goal" class="auth-input" placeholder="Amount (RM)" step="0.01" min="1" required>
+        <button type="submit" class="auth-btn">Update Goal</button>
+        <button type="button" class="auth-btn secondary-btn close-modal" style="background: var(--bg-panel-light); margin-top: 8px;">Cancel</button>
+      </form>
     </div>
 
     <!-- QR Scanner Modal -->
