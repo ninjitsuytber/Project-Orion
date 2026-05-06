@@ -937,7 +937,7 @@ body {
   font-size: 0.95rem;
 }
 
-.breakdown-item .label { color: var(--text-secondary); }
+.breakdown-item .label { color: var(--text-secondary); margin-right: 2rem;}
 .breakdown-item .val { font-weight: 600; }
 .breakdown-item.border-top {
   margin-top: 0.5rem;
@@ -1003,7 +1003,7 @@ body {
   font-size: 1rem;
 }
 
-.milestone-label { color: var(--text-secondary); }
+.milestone-label { color: var(--text-secondary); margin-right: 2rem;}
 .milestone-val { font-weight: 700; }
 
 .milestone-progress-bar {
