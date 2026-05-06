@@ -33,16 +33,16 @@ const TIERS = [
 
 //Badges
 const BADGES = [
-  { id: "b1", name: "No Money No Talk", tierRequired: 1, img: "assets/badges/b1.png" },
-  { id: "b2", name: "Coin Sniffer", tierRequired: 2, img: "assets/badges/b2.png" },
-  { id: "b3", name: "One Ringgit Millionaire", tierRequired: 3, img: "assets/badges/b3.png" },
-  { id: "b4", name: "Sikit-Sikit Jadi Bukit", tierRequired: 4, img: "assets/badges/b4.png" },
-  { id: "b5", name: "Wallet Protector", tierRequired: 5, img: "assets/badges/b5.png" },
-  { id: "b6", name: "Bajet Survivalist", tierRequired: 6, img: "assets/badges/b6.png" },
-  { id: "b7", name: "Cha Ching Apprentice", tierRequired: 7, img: "assets/badges/b7.png" },
-  { id: "b8", name: "Tabung Boss", tierRequired: 8, img: "assets/badges/b8.png" },
-  { id: "b9", name: "Lowkey Kaya", tierRequired: 9, img: "assets/badges/b9.png" },
-  { id: "b10", name: "Sultan Simpanan", tierRequired: 10, img: "assets/badges/b10.png" }
+  { id: "b1", name: "No Money No Talk", tierRequired: 1, img: "assets/badges/b1.svg" },
+  { id: "b2", name: "Coin Sniffer", tierRequired: 2, img: "assets/badges/b2.svg" },
+  { id: "b3", name: "One Ringgit Millionaire", tierRequired: 3, img: "assets/badges/b3.svg" },
+  { id: "b4", name: "Sikit-Sikit Jadi Bukit", tierRequired: 4, img: "assets/badges/b4.svg" },
+  { id: "b5", name: "Wallet Protector", tierRequired: 5, img: "assets/badges/b5.svg" },
+  { id: "b6", name: "Bajet Survivalist", tierRequired: 6, img: "assets/badges/b6.svg" },
+  { id: "b7", name: "Cha Ching Apprentice", tierRequired: 7, img: "assets/badges/b7.svg" },
+  { id: "b8", name: "Tabung Boss", tierRequired: 8, img: "assets/badges/b8.svg" },
+  { id: "b9", name: "Lowkey Kaya", tierRequired: 9, img: "assets/badges/b9.svg" },
+  { id: "b10", name: "Sultan Simpanan", tierRequired: 10, img: "assets/badges/b10.svg" }
 ];
 
 //Tier Update
@@ -480,6 +480,12 @@ async function sendMoney(email, amount) {
     showError('send-money-error', 'Please enter a valid amount greater than zero');
     return;
   }
+
+  if (email === userProfile.email) {
+    showError('send-money-error', 'You cannot send money to yourself');
+    return;
+  }
+
   if (amount > userProfile.balance) {
     showError('send-money-error', 'Insufficient balance');
     return;
@@ -492,27 +498,21 @@ async function sendMoney(email, amount) {
     return;
   }
 
-  // 1. Find recipient
-  const { data: recipient, error: findError } = await supabase
-    .from('profiles')
-    .select('id, balance')
-    .eq('email', email)
-    .single();
+  // Use RPC for atomic transfer and to bypass RLS restrictions on updating other users
+  const { data, error } = await supabase.rpc('transfer_money', {
+    target_email: email,
+    amount: amount
+  });
 
-  if (!recipient) {
-    showError('send-money-error', 'User not found');
+  if (error) {
+    showError('send-money-error', error.message);
     return;
   }
 
-  // 2. Perform Transfer
-  await supabase.from('profiles').update({ balance: userProfile.balance - amount }).eq('id', userProfile.id);
-  await supabase.from('profiles').update({ balance: recipient.balance + amount }).eq('id', recipient.id);
-
-  // 3. Log Transactions
-  await supabase.from('transactions').insert([
-    { user_id: userProfile.id, type: 'send', amount, description: `Sent to ${email}` },
-    { user_id: recipient.id, type: 'receive', amount, description: `Received from ${userProfile.email}` }
-  ]);
+  if (data && !data.success) {
+    showError('send-money-error', data.message);
+    return;
+  }
 
   updateDashboard();
   closeModal();
