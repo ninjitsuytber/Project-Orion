@@ -1,667 +1,914 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#8B1A8B" />
-    <link rel="stylesheet" href="./style.css" />
-    <title>Project Orion — Smart Finance</title>
-    <meta name="description" content="AI-powered financial literacy platform. Track spending, build streaks, and achieve your savings goals." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  </head>
-  <body>
-    <div id="app">
-      <!-- Auth Views -->
-      <div id="login-view" class="auth-container" style="display: none;">
-        <div class="auth-box">
-          <h2>Welcome Back</h2>
-          <form id="login-form" class="auth-form">
-            <input type="email" id="login-email" class="auth-input" placeholder="Email Address" required>
-            <input type="password" id="login-password" class="auth-input" placeholder="Password" required>
-            <button type="submit" class="auth-btn">Login</button>
-            <button type="button" id="btn-demo-login" class="auth-btn secondary-btn" style="margin-top: 8px; background: var(--bg-panel-light); border: 1px solid var(--accent-primary);">Login with Demo Account</button>
-            <div id="login-error" class="error-msg"></div>
-          </form>
-          <div class="auth-switch">
-            Don't have an account? <a id="go-register" style="cursor:pointer;">Sign Up</a>
-          </div>
-        </div>
-      </div>
 
-      <div id="register-view" class="auth-container" style="display: none;">
-        <div class="auth-box">
-          <h2>Create Account</h2>
-          <form id="register-form" class="auth-form">
-            <input type="text" id="register-name" class="auth-input" placeholder="Full Name" required>
-            <input type="email" id="register-email" class="auth-input" placeholder="Email Address" required>
-            <input type="password" id="register-password" class="auth-input" placeholder="Password (min 6 chars)" required>
-            <button type="submit" class="auth-btn">Sign Up</button>
-            <div id="register-error" class="error-msg"></div>
-          </form>
-          <div class="auth-switch">
-            Already have an account? <a id="go-login" style="cursor:pointer;">Login</a>
-          </div>
-        </div>
-      </div>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#8B1A8B" />
+  <link rel="stylesheet" href="./style.css" />
+  <title>Project Orion — Smart Finance</title>
+  <meta name="description"
+    content="AI-powered financial literacy platform. Track spending, build streaks, and achieve your savings goals." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet" />
+</head>
 
-      <!-- Main App View -->
-      <div id="main-view" style="display: none;">
-        <nav class="top-nav" id="top-nav">
-          <div class="brand" id="nav-brand" style="cursor: pointer;">
-            <img src="./logo.png" alt="GX Orion" class="brand-logo" />
-          </div>
-          
-          <div class="nav-links">
-            <a class="nav-item active" id="nav-home">
-              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-              <span class="nav-text">Home</span>
-            </a>
-            <a class="nav-item" id="nav-rewards">
-              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 019.9-1"></path></svg>
-              <span class="nav-text">Rewards</span>
-            </a>
-            <a class="nav-item" id="nav-discover">
-              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                <rect x="4" y="4" width="16" height="16" rx="2"></rect>
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M16 12h-1M8 12h1M12 8v1M12 15v1"></path>
-              </svg>
-              <span class="nav-text-full">Savings & Spendings</span>
-              <span class="nav-text-short">Savings</span>
-            </a>
-            <a class="nav-item" id="nav-me">
-              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-              <span class="nav-text">Me</span>
-            </a>
-          </div>
-
-          <div class="nav-right">
-            <div class="search-bar">
-              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input type="text" placeholder="Search">
-            </div>
-            
-            <div class="nav-icon">
-              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-            </div>
-            
-            <div class="nav-icon">
-              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-            </div>
-          </div>
-        </nav>
-
-        <!-- Pages -->
-        <div id="page-home" class="page-container" style="display: none;">
-          <div class="notice-bar">
-            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-            <span>Scheduled maintenance for a better learning experience</span>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </div>
-
-          <main class="main-content">
-            <div class="col-left">
-              <div class="balance-card mo-1">
-                <div class="balance-label">
-                  Account Balance
-                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                </div>
-                <div class="balance-amount">
-                  RM 1050.00 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                </div>
-                
-                <div class="balance-details">
-                  <div class="balance-box spending-card">
-                    <div class="card-header-row">
-                      <h4>Daily Spendings</h4>
-                      <span class="daily-limit-badge" id="daily-limit-text">Limit: RM 23.33</span>
-                    </div>
-                    
-                    <div class="spending-visual-container">
-                      <div class="progress-ring-v2">
-                        <svg width="120" height="120">
-                          <circle class="ring-bg" cx="60" cy="60" r="54"></circle>
-                          <circle class="ring-fill" id="spending-ring-fill" cx="60" cy="60" r="54"></circle>
-                        </svg>
-                        <div class="ring-content">
-                          <span class="spent-pct" id="spent-pct">0%</span>
-                          <span class="spent-label">Spent</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="spending-footer">
-                      <div class="spend-stat">
-                        <span class="label">Today's Spend</span>
-                        <span class="val" id="spent-today-text">RM 0.00</span>
-                      </div>
-                      <div class="spend-stat">
-                        <span class="label">Remaining</span>
-                        <span class="val highlight" id="remaining-today-text">RM 0.00</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="balance-box saving-goal-card">
-                    <h4>Saving Goals</h4>
-                    <div class="jar-visual-container">
-                      <img id="saving-jar-img" src="assets/jar/1.svg" alt="Saving Jar" class="jar-img">
-                      <div class="jar-stats">
-                        <span class="jar-pct" id="jar-pct">0%</span>
-                        <span class="jar-target">Goal: RM 300</span>
-                      </div>
-                    </div>
-                    <div class="jar-info">
-                      <span class="label">Saved so far</span>
-                      <span class="amount" id="jar-saved-amount">RM 0.00</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="widget mo-3">
-                <div class="widget-header-tabs">
-                  <h3 class="widget-title">Recent Activity</h3>
-                  <div class="activity-tabs">
-                    <button class="activity-tab active" data-tab="transactions">Transactions</button>
-                    <button class="activity-tab" data-tab="app-activities">App</button>
-                  </div>
-                </div>
-
-                <div id="tab-transactions" class="activity-content active">
-                  <div class="transactions-list">
-                    <div class="tx-item">
-                      <div class="tx-left">
-                        <div class="tx-icon">
-                          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1v22m5-18H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                        </div>
-                        <div class="tx-info">
-                          <h4>Grab Food</h4>
-                          <p>Today, 12:30 PM</p>
-                        </div>
-                      </div>
-                      <span class="tx-amount negative">-RM 25.00</span>
-                    </div>
-                    <div class="tx-item">
-                      <div class="tx-left">
-                        <div class="tx-icon">
-                          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1v22m5-18H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                        </div>
-                        <div class="tx-info">
-                          <h4>Salary Credit</h4>
-                          <p>Yesterday, 09:00 AM</p>
-                        </div>
-                      </div>
-                      <span class="tx-amount positive">+RM 3,500.00</span>
-                    </div>
-                    <div class="tx-item">
-                      <div class="tx-left">
-                        <div class="tx-icon">
-                          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1v22m5-18H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                        </div>
-                        <div class="tx-info">
-                          <h4>TNG eWallet</h4>
-                          <p>2 days ago</p>
-                        </div>
-                      </div>
-                      <span class="tx-amount negative">-RM 10.00</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div id="tab-app-activities" class="activity-content">
-                  <div class="transactions-list">
-                    <div class="tx-item">
-                      <div class="tx-left">
-                        <div class="tx-icon">
-                          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                        </div>
-                        <div class="tx-info">
-                          <h4>Profile Updated</h4>
-                          <p>Just now</p>
-                        </div>
-                      </div>
-                      <span class="tx-amount">+10 XP</span>
-                    </div>
-                    
-                    <div class="tx-item">
-                      <div class="tx-left">
-                        <div class="tx-icon">
-                          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                        </div>
-                        <div class="tx-info">
-                          <h4>Quiz Taken</h4>
-                          <p>3 days ago</p>
-                        </div>
-                      </div>
-                      <span class="tx-amount">+20 XP</span>
-                    </div>
-
-                    <div class="tx-item">
-                      <div class="tx-left">
-                        <div class="tx-icon">
-                          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-                        </div>
-                        <div class="tx-info">
-                          <h4>Saving Goals</h4>
-                          <p>1 days ago</p>
-                        </div>
-                      </div>
-                      <span class="tx-amount">+100 XP</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-main">
-              <div class="widget mo-2" style="padding-top: 1rem; padding-bottom: 1rem;">
-                <h3 class="widget-title">Quick Actions</h3>
-                <div class="quick-actions">
-                  <div class="action-btn">
-                    <div class="action-icon">
-                      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    </div>
-                    <span>Add Money</span>
-                  </div>
-                  <div class="action-btn">
-                    <div class="action-icon">
-                      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                        <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
-                        <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
-                        <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
-                        <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
-                        <rect x="7" y="7" width="10" height="10" rx="1"></rect>
-                        <line x1="10" y1="12" x2="14" y2="12"></line>
-                        <line x1="12" y1="10" x2="12" y2="14"></line>
-                      </svg>
-                    </div>
-                    <span>Scan QR</span>
-                  </div>
-                  <div class="action-btn">
-                    <div class="action-icon">
-                      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                    </div>
-                    <span>Send Money</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="widget mo-5" id="discover-widget" style="cursor: pointer;">
-                <h3 class="widget-title" style="margin-bottom: 1.5rem;">Discover</h3>
-                <div class="discover-section">
-                  <h4>Learn</h4>
-                  <div class="discover-grid">
-                    <div class="discover-item">
-                      <div class="badge-new">NEW</div>
-                      <div class="discover-icon">
-                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                      </div>
-                      <span>ETF Basics</span>
-                    </div>
-                    <div class="discover-item">
-                      <div class="badge-new">NEW</div>
-                      <div class="discover-icon">
-                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                      </div>
-                      <span>Savings Goals</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-right">
-              <div class="widget mo-4" id="rewards-widget" style="cursor: pointer;">
-                <div class="rewards-header">
-                  <h3 class="widget-title" style="margin: 0;">Rewards & Missions</h3>
-                </div>
-                
-                <div class="gift-boxes">
-                  <div class="gift-box">
-                    <span class="gift-icon">🎁</span>
-                    <span class="gift-label">In progress</span>
-                  </div>
-                  <div class="gift-box">
-                    <span class="gift-icon">🎁</span>
-                    <span class="gift-label">In progress</span>
-                  </div>
-                  <div class="gift-box">
-                    <span class="gift-icon">🎁</span>
-                    <span class="gift-label">In progress</span>
-                  </div>
-                </div>
-
-                <div class="rewards-list">
-                  <div class="reward-card">
-                    <div class="reward-icon purple">
-                      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    </div>
-                    <div class="reward-info">
-                      <h4>Refer a friend</h4>
-                      <p>Refer & earn rewards up to 225 XP. Unlimited...</p>
-                      <span class="time-left">57 days left</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </main>
-        </div>
-
-        <div id="page-rewards" class="page-container" style="display: none;">
-          <main class="rw-layout">
-            <div class="rw-header">
-              <h1 class="rw-title">Rewards</h1>
-              <p class="rw-subtitle">Explore deals, earn badges, and uncover surprises!</p>
-            </div>
-
-            <div class="rw-stats-row">
-              <div class="rw-stat-item">
-                <div class="rw-stat-icon accent-purple">
-                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                </div>
-                <div class="rw-stat-body">
-                  <span class="rw-stat-value">7 Days</span>
-                  <span class="rw-stat-label">Streak</span>
-                </div>
-              </div>
-              <div class="rw-stat-divider"></div>
-              <div class="rw-stat-item">
-                <div class="rw-stat-icon accent-gold">
-                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
-                </div>
-                <div class="rw-stat-body">
-                  <span class="rw-stat-value">Gold</span>
-                  <span class="rw-stat-label">Badge</span>
-                </div>
-              </div>
-              <div class="rw-stat-divider"></div>
-              <div class="rw-stat-item">
-                <div class="rw-stat-icon accent-cyan">
-                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                </div>
-                <div class="rw-stat-body">
-                  <span class="rw-stat-value">850 XP</span>
-                  <span class="rw-stat-label">Total Score</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="rw-grid">
-              <div class="rw-card">
-                <div class="rw-card-header">
-                  <span class="rw-card-title">Badges</span>
-                  <a href="#" class="rw-view-all">View all</a>
-                </div>
-                <div class="rw-badges-row">
-                  <div class="rw-badge-item">
-                    <div class="rw-badge-icon rw-badge-bronze">
-                      <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                        <path d="M20 12a8 8 0 0 1-16 0V6l8-3 8 3v6z"></path>
-                        <path d="M12 3v9m0 0-4-2m4 2 4-2"></path>
-                      </svg>
-                      <span class="rw-badge-pill">In progress</span>
-                    </div>
-                    <span class="rw-badge-count">0</span>
-                    <span class="rw-badge-label">Bronze Tier</span>
-                  </div>
-                  <div class="rw-badge-item">
-                    <div class="rw-badge-icon rw-badge-silver">
-                      <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                        <path d="M20 12a8 8 0 0 1-16 0V6l8-3 8 3v6z"></path>
-                        <path d="M12 3v9m0 0-4-2m4 2 4-2"></path>
-                      </svg>
-                      <span class="rw-badge-pill">In progress</span>
-                    </div>
-                    <span class="rw-badge-count">2</span>
-                    <span class="rw-badge-label">Silver Tier</span>
-                  </div>
-                  <div class="rw-badge-item">
-                    <div class="rw-badge-icon rw-badge-gold">
-                      <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                        <path d="M20 12a8 8 0 0 1-16 0V6l8-3 8 3v6z"></path>
-                        <path d="M12 3v9m0 0-4-2m4 2 4-2"></path>
-                      </svg>
-                      <span class="rw-badge-pill">In progress</span>
-                    </div>
-                    <span class="rw-badge-count">4</span>
-                    <span class="rw-badge-label">Gold Tier</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="rw-missions-col">
-                <div class="rw-mission-card">
-                  <div class="rw-mission-icon">
-                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                  </div>
-                  <div class="rw-mission-body">
-                    <span class="rw-mission-title">Refer a friend</span>
-                    <span class="rw-mission-meta">Refer &amp; earn rewards up to RM225. Unlimited.</span>
-                    <span class="rw-mission-time">57 days left</span>
-                  </div>
-                </div>
-                <div class="rw-mission-card">
-                  <div class="rw-mission-icon">
-                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                  </div>
-                  <div class="rw-mission-body">
-                    <span class="rw-mission-title">Drawdown from FlexiCredit</span>
-                    <span class="rw-mission-meta">Earn unlimited chances to win 100% cashback.</span>
-                    <span class="rw-mission-time">27 days left</span>
-                  </div>
-                </div>
-                <div class="rw-mission-card">
-                  <div class="rw-mission-icon">
-                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                  </div>
-                  <div class="rw-mission-body">
-                    <span class="rw-mission-title">Complete 3 Lessons</span>
-                    <span class="rw-mission-meta">Earn 100 XP &middot; 2 of 3 done.</span>
-                    <span class="rw-mission-time">27 days left</span>
-                  </div>
-                </div>
-                <div class="rw-view-all-btn-wrap">
-                  <button class="rw-view-all-btn">View all missions</button>
-                </div>
-              </div>
-            </div>
-
-            <div class="rw-section">
-              <h2 class="rw-section-title">Redeemable Rewards</h2>
-              <div class="rw-redeem-list">
-                <div class="rw-redeem-row">
-                  <div class="rw-redeem-icon accent-purple">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                  </div>
-                  <div class="rw-redeem-body">
-                    <span class="rw-redeem-title">RM10 Cashback Voucher</span>
-                    <span class="rw-redeem-meta">500 XP required</span>
-                  </div>
-                  <button class="btn-sm">Redeem</button>
-                </div>
-                <div class="rw-redeem-row">
-                  <div class="rw-redeem-icon accent-purple">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-                  </div>
-                  <div class="rw-redeem-body">
-                    <span class="rw-redeem-title">Advanced Investment Course</span>
-                    <span class="rw-redeem-meta">300 XP required</span>
-                  </div>
-                  <button class="btn-sm">Redeem</button>
-                </div>
-              </div>
-            </div>
-          </main>
-        </div>
-
-        <div id="page-discover" class="page-container" style="display: none;">
-          <main class="page-layout">
-            <div class="page-section">
-              <h1 class="page-title">Savings &amp; Spendings</h1>
-              <p class="page-subtitle">A detailed breakdown of your financial health and progress.</p>
-            </div>
-
-            <div class="financial-details-grid">
-              <!-- Spending Detail -->
-              <div class="detail-card">
-                <h2 class="section-heading">Detailed Spendings</h2>
-                <div class="spending-analysis">
-                  <div class="progress-ring-v2 large">
-                    <svg width="180" height="180">
-                      <circle class="ring-bg" cx="90" cy="90" r="82"></circle>
-                      <circle class="ring-fill" id="detail-spending-ring-fill" cx="90" cy="90" r="82"></circle>
-                    </svg>
-                    <div class="ring-content">
-                      <span class="spent-pct" id="detail-spent-pct">0%</span>
-                      <span class="spent-label">Used</span>
-                    </div>
-                  </div>
-                  <div class="spending-breakdown">
-                    <div class="breakdown-item">
-                      <span class="label">Monthly Income</span>
-                      <span class="val">RM 1,000.00</span>
-                    </div>
-                    <div class="breakdown-item">
-                      <span class="label">Savings Target</span>
-                      <span class="val highlight-savings">- RM 300.00</span>
-                    </div>
-                    <div class="breakdown-item border-top">
-                      <span class="label">Disposable Budget</span>
-                      <span class="val">RM 700.00</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="chart-placeholder">
-                  <span class="placeholder-text">Weekly Spending Trend Graph</span>
-                  <div class="mini-bar-chart">
-                    <div class="bar" style="height: 40%"></div>
-                    <div class="bar" style="height: 60%"></div>
-                    <div class="bar" style="height: 30%"></div>
-                    <div class="bar" style="height: 80%"></div>
-                    <div class="bar" style="height: 50%"></div>
-                    <div class="bar" style="height: 70%"></div>
-                    <div class="bar" style="height: 45%"></div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Savings Detail -->
-              <div class="detail-card">
-                <h2 class="section-heading">Savings Progress</h2>
-                <div class="jar-visual-container large">
-                  <img id="detail-saving-jar-img" src="assets/jar/1.svg" alt="Saving Jar" class="jar-img-large">
-                  <div class="jar-stats">
-                    <span class="jar-pct-large" id="detail-jar-pct">0%</span>
-                    <span class="jar-target-large">Goal: RM 300</span>
-                  </div>
-                </div>
-                <div class="savings-milestones">
-                  <div class="milestone-row">
-                    <span class="milestone-label">Current Balance</span>
-                    <span class="milestone-val" id="detail-jar-saved-amount">RM 0.00</span>
-                  </div>
-                  <div class="milestone-row">
-                    <span class="milestone-label">Projected Completion</span>
-                    <span class="milestone-val">22 Days</span>
-                  </div>
-                  <div class="milestone-progress-bar">
-                    <div class="progress-track">
-                      <div id="detail-milestone-fill" class="progress-fill" style="width: 0%"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </main>
-        </div>
-
-        <div id="page-me" class="page-container" style="display: none;">
-          <main class="page-layout">
-            <div class="page-section">
-              <div class="profile-hero">
-                <div class="profile-avatar">
-                  <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                </div>
-                <div class="profile-info">
-                  <h2 class="profile-name">Johnathan Doe</h2>
-                  <span class="profile-email">user@projectorion.test</span>
-                </div>
-                <div class="profile-badge">
-                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
-                  <span>Gold Saver</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="page-section">
-              <h2 class="section-heading">Account</h2>
-              <div class="list-group">
-                <div class="list-row list-row--clickable">
-                  <div class="list-icon-wrap">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                  </div>
-                  <div class="list-body"><span class="list-title">Personal Details</span></div>
-                  <svg class="list-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </div>
-                <div class="list-row list-row--clickable">
-                  <div class="list-icon-wrap">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
-                  </div>
-                  <div class="list-body"><span class="list-title">Security &amp; Privacy</span></div>
-                  <svg class="list-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </div>
-                <div class="list-row list-row--clickable">
-                  <div class="list-icon-wrap">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                  </div>
-                  <div class="list-body"><span class="list-title">Spending Limits</span></div>
-                  <svg class="list-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </div>
-              </div>
-            </div>
-
-            <div class="page-section">
-              <h2 class="section-heading">Preferences</h2>
-              <div class="list-group">
-                <div class="list-row list-row--clickable">
-                  <div class="list-icon-wrap">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                  </div>
-                  <div class="list-body"><span class="list-title">Notifications</span></div>
-                  <svg class="list-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </div>
-                <div class="list-row list-row--clickable">
-                  <div class="list-icon-wrap">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                  </div>
-                  <div class="list-body"><span class="list-title">App Settings</span></div>
-                  <svg class="list-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </div>
-                <div class="list-row list-row--clickable">
-                  <div class="list-icon-wrap">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                  </div>
-                  <div class="list-body"><span class="list-title">Help &amp; Support</span></div>
-                  <svg class="list-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </div>
-              </div>
-            </div>
-
-            <div class="page-section">
-              <button class="btn-danger" id="btn-logout">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                Sign Out
-              </button>
-            </div>
-          </main>
+<body>
+  <div id="app">
+    <!-- Auth Views -->
+    <div id="login-view" class="auth-container" style="display: none;">
+      <div class="auth-box">
+        <h2>Welcome Back</h2>
+        <form id="login-form" class="auth-form">
+          <input type="email" id="login-email" class="auth-input" placeholder="Email Address" required>
+          <input type="password" id="login-password" class="auth-input" placeholder="Password" required>
+          <button type="submit" class="auth-btn">Login</button>
+          <button type="button" id="btn-demo-login" class="auth-btn secondary-btn"
+            style="margin-top: 8px; background: var(--bg-panel-light); border: 1px solid var(--accent-primary);">Login
+            with Demo Account</button>
+          <div id="login-error" class="error-msg"></div>
+        </form>
+        <div class="auth-switch">
+          Don't have an account? <a id="go-register" style="cursor:pointer;">Sign Up</a>
         </div>
       </div>
     </div>
-    
-    <script type="module" src="./script.js"></script>
-  </body>
+
+    <div id="register-view" class="auth-container" style="display: none;">
+      <div class="auth-box">
+        <h2>Create Account</h2>
+        <form id="register-form" class="auth-form">
+          <input type="text" id="register-name" class="auth-input" placeholder="Full Name" required>
+          <input type="email" id="register-email" class="auth-input" placeholder="Email Address" required>
+          <input type="password" id="register-password" class="auth-input" placeholder="Password (min 6 chars)"
+            required>
+          <button type="submit" class="auth-btn">Sign Up</button>
+          <div id="register-error" class="error-msg"></div>
+        </form>
+        <div class="auth-switch">
+          Already have an account? <a id="go-login" style="cursor:pointer;">Login</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main App View -->
+    <div id="main-view" style="display: none;">
+      <nav class="top-nav" id="top-nav">
+        <div class="brand" id="nav-brand" style="cursor: pointer;">
+          <img src="./logo.png" alt="GX Orion" class="brand-logo" />
+        </div>
+
+        <div class="nav-links">
+          <a class="nav-item active" id="nav-home">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span class="nav-text">Home</span>
+          </a>
+          <a class="nav-item" id="nav-rewards">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 019.9-1"></path>
+            </svg>
+            <span class="nav-text">Rewards</span>
+          </a>
+          <a class="nav-item" id="nav-discover">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" viewBox="0 0 24 24">
+              <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M16 12h-1M8 12h1M12 8v1M12 15v1"></path>
+            </svg>
+            <span class="nav-text-full">Savings & Spendings</span>
+            <span class="nav-text-short">Savings</span>
+          </a>
+          <a class="nav-item" id="nav-me">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span class="nav-text">Me</span>
+          </a>
+        </div>
+
+        <div class="nav-right">
+          <div class="search-bar">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" placeholder="Search">
+          </div>
+
+          <div class="nav-icon">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+          </div>
+
+          <div class="nav-icon">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Pages -->
+      <div id="page-home" class="page-container" style="display: none;">
+        <div class="notice-bar">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span>Scheduled maintenance for a better learning experience</span>
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </div>
+
+        <main class="main-content">
+          <div class="col-left">
+            <div class="balance-card mo-1">
+              <div class="balance-label">
+                Account Balance
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+              </div>
+              <div class="balance-amount">
+                <span id="balance-amount-text">RM 0.00</span> <svg id="balance-toggle-btn" width="20" height="20"
+                  fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="cursor: pointer;">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </div>
+
+              <div class="balance-details">
+                <div class="balance-box spending-card" id="spending-card-nav" style="cursor: pointer;">
+                  <div class="card-header-row">
+                    <h4>Daily Spendings</h4>
+                    <span class="daily-limit-badge" id="daily-limit-text">Limit: RM 0.00</span>
+                  </div>
+
+                  <div class="spending-visual-container">
+                    <div class="progress-ring-v2">
+                      <svg width="120" height="120">
+                        <circle class="ring-bg" cx="60" cy="60" r="54"></circle>
+                        <circle class="ring-fill" id="spending-ring-fill" cx="60" cy="60" r="54"></circle>
+                      </svg>
+                      <div class="ring-content">
+                        <span class="spent-pct" id="spent-pct">0%</span>
+                        <span class="spent-label">Spent</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="spending-footer">
+                    <div class="spend-stat">
+                      <span class="label">Today's Spend</span>
+                      <span class="val" id="spent-today-text">RM 0.00</span>
+                    </div>
+                    <div class="spend-stat">
+                      <span class="label">Remaining</span>
+                      <span class="val highlight" id="remaining-today-text">RM 0.00</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="balance-box saving-goal-card" id="saving-card-nav" style="cursor: pointer;">
+                  <h4>Saving Goals</h4>
+                  <div class="jar-visual-container">
+                    <img id="saving-jar-img" src="assets/jar/1.svg" alt="Saving Jar" class="jar-img">
+                    <div class="jar-stats">
+                      <span class="jar-pct" id="jar-pct">0%</span>
+                      <span class="jar-target">Goal: RM 300</span>
+                    </div>
+                  </div>
+                  <div class="jar-info">
+                    <span class="label">Saved so far</span>
+                    <span class="amount" id="jar-saved-amount">RM 0.00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="widget mo-3">
+              <div class="widget-header-tabs">
+                <h3 class="widget-title">Recent Activity</h3>
+                <div class="activity-tabs">
+                  <button class="activity-tab active" data-tab="transactions">Transactions</button>
+                  <button class="activity-tab" data-tab="app-activities">App</button>
+                </div>
+              </div>
+
+              <div id="tab-transactions" class="activity-content active">
+                <div class="transactions-list">
+                  <div class="tx-item">
+                    <div class="tx-left">
+                      <div class="tx-icon">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+                          viewBox="0 0 24 24">
+                          <path d="M12 1v22m5-18H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                      </div>
+                      <div class="tx-info">
+                        <h4>Grab Food</h4>
+                        <p>Today, 12:30 PM</p>
+                      </div>
+                    </div>
+                    <span class="tx-amount negative">-RM 25.00</span>
+                  </div>
+                  <div class="tx-item">
+                    <div class="tx-left">
+                      <div class="tx-icon">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+                          viewBox="0 0 24 24">
+                          <path d="M12 1v22m5-18H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                      </div>
+                      <div class="tx-info">
+                        <h4>Salary Credit</h4>
+                        <p>Yesterday, 09:00 AM</p>
+                      </div>
+                    </div>
+                    <span class="tx-amount positive">+RM 3,500.00</span>
+                  </div>
+                  <div class="tx-item">
+                    <div class="tx-left">
+                      <div class="tx-icon">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+                          viewBox="0 0 24 24">
+                          <path d="M12 1v22m5-18H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                      </div>
+                      <div class="tx-info">
+                        <h4>TNG eWallet</h4>
+                        <p>2 days ago</p>
+                      </div>
+                    </div>
+                    <span class="tx-amount negative">-RM 10.00</span>
+                  </div>
+                </div>
+              </div>
+
+              <div id="tab-app-activities" class="activity-content">
+                <div class="transactions-list">
+                  <div class="tx-item">
+                    <div class="tx-left">
+                      <div class="tx-icon">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+                          viewBox="0 0 24 24">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                      </div>
+                      <div class="tx-info">
+                        <h4>Profile Updated</h4>
+                        <p>Just now</p>
+                      </div>
+                    </div>
+                    <span class="tx-amount">+10 XP</span>
+                  </div>
+
+                  <div class="tx-item">
+                    <div class="tx-left">
+                      <div class="tx-icon">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+                          viewBox="0 0 24 24">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                          <line x1="16" y1="2" x2="16" y2="6"></line>
+                          <line x1="8" y1="2" x2="8" y2="6"></line>
+                          <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                      </div>
+                      <div class="tx-info">
+                        <h4>Quiz Taken</h4>
+                        <p>3 days ago</p>
+                      </div>
+                    </div>
+                    <span class="tx-amount">+20 XP</span>
+                  </div>
+
+                  <div class="tx-item">
+                    <div class="tx-left">
+                      <div class="tx-icon">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+                          viewBox="0 0 24 24">
+                          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                      </div>
+                      <div class="tx-info">
+                        <h4>Saving Goals</h4>
+                        <p>1 days ago</p>
+                      </div>
+                    </div>
+                    <span class="tx-amount">+100 XP</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-main">
+            <div class="widget mo-2" style="padding-top: 1rem; padding-bottom: 1rem;">
+              <h3 class="widget-title">Quick Actions</h3>
+              <div class="quick-actions">
+                <div class="action-btn" id="btn-add-money">
+                  <div class="action-icon">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                  </div>
+                  <span>Add Money</span>
+                </div>
+                <div class="action-btn" id="btn-scan-qr">
+                  <div class="action-icon">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                      <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                      <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                      <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                      <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                      <rect x="7" y="7" width="10" height="10" rx="1"></rect>
+                      <line x1="10" y1="12" x2="14" y2="12"></line>
+                      <line x1="12" y1="10" x2="12" y2="14"></line>
+                    </svg>
+                  </div>
+                  <span>Scan QR</span>
+                </div>
+                <div class="action-btn" id="btn-send-money">
+                  <div class="action-icon">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                      <line x1="22" y1="2" x2="11" y2="13"></line>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                  </div>
+                  <span>Send Money</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="widget mo-5" id="discover-widget" style="cursor: pointer;">
+              <h3 class="widget-title" style="margin-bottom: 1.5rem;">Discover</h3>
+              <div class="discover-section">
+                <h4>Learn</h4>
+                <div class="discover-grid">
+                  <div class="discover-item">
+                    <div class="badge-new">NEW</div>
+                    <div class="discover-icon">
+                      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                      </svg>
+                    </div>
+                    <span>ETF Basics</span>
+                  </div>
+                  <div class="discover-item">
+                    <div class="badge-new">NEW</div>
+                    <div class="discover-icon">
+                      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                      </svg>
+                    </div>
+                    <span>Savings Goals</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-right">
+            <div class="widget mo-4" id="rewards-widget" style="cursor: pointer;">
+              <div class="rewards-header">
+                <h3 class="widget-title" style="margin: 0;">Rewards & Missions</h3>
+              </div>
+
+              <div class="gift-boxes">
+                <div class="gift-box">
+                  <span class="gift-icon">🎁</span>
+                  <span class="gift-label">In progress</span>
+                </div>
+                <div class="gift-box">
+                  <span class="gift-icon">🎁</span>
+                  <span class="gift-label">In progress</span>
+                </div>
+                <div class="gift-box">
+                  <span class="gift-icon">🎁</span>
+                  <span class="gift-label">In progress</span>
+                </div>
+              </div>
+
+              <div class="rewards-list">
+                <div class="reward-card">
+                  <div class="reward-icon purple">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </div>
+                  <div class="reward-info">
+                    <h4>Refer a friend</h4>
+                    <p>Refer & earn rewards up to 225 XP. Unlimited...</p>
+                    <span class="time-left">57 days left</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <div id="page-rewards" class="page-container" style="display: none;">
+        <main class="rw-layout">
+          <div class="rw-header">
+            <h1 class="rw-title">Rewards</h1>
+            <p class="rw-subtitle">Explore deals, earn badges, and uncover surprises!</p>
+          </div>
+
+          <div class="rw-stats-row">
+            <div class="rw-stat-item">
+              <div class="rw-stat-icon accent-purple">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                  <polyline points="17 6 23 6 23 12"></polyline>
+                </svg>
+              </div>
+              <div class="rw-stat-body">
+                <span class="rw-stat-value">7 Days</span>
+                <span class="rw-stat-label">Streak</span>
+              </div>
+            </div>
+            <div class="rw-stat-divider"></div>
+            <div class="rw-stat-item">
+              <div class="rw-stat-icon accent-gold">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="8" r="7"></circle>
+                  <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+                </svg>
+              </div>
+              <div class="rw-stat-body">
+                <span class="rw-stat-value">Gold</span>
+                <span class="rw-stat-label">Badge</span>
+              </div>
+            </div>
+            <div class="rw-stat-divider"></div>
+            <div class="rw-stat-item">
+              <div class="rw-stat-icon accent-cyan">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <polygon
+                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                  </polygon>
+                </svg>
+              </div>
+              <div class="rw-stat-body">
+                <span class="rw-stat-value">850 XP</span>
+                <span class="rw-stat-label">Total Score</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="rw-grid">
+            <div class="rw-card">
+              <div class="rw-card-header">
+                <span class="rw-card-title">Badges</span>
+                <a href="#" class="rw-view-all">View all</a>
+              </div>
+              <div class="rw-badges-row">
+                <div class="rw-badge-item">
+                  <div class="rw-badge-icon rw-badge-bronze">
+                    <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"
+                      viewBox="0 0 24 24">
+                      <path d="M20 12a8 8 0 0 1-16 0V6l8-3 8 3v6z"></path>
+                      <path d="M12 3v9m0 0-4-2m4 2 4-2"></path>
+                    </svg>
+                    <span class="rw-badge-pill">In progress</span>
+                  </div>
+                  <span class="rw-badge-count">0</span>
+                  <span class="rw-badge-label">Bronze Tier</span>
+                </div>
+                <div class="rw-badge-item">
+                  <div class="rw-badge-icon rw-badge-silver">
+                    <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"
+                      viewBox="0 0 24 24">
+                      <path d="M20 12a8 8 0 0 1-16 0V6l8-3 8 3v6z"></path>
+                      <path d="M12 3v9m0 0-4-2m4 2 4-2"></path>
+                    </svg>
+                    <span class="rw-badge-pill">In progress</span>
+                  </div>
+                  <span class="rw-badge-count">2</span>
+                  <span class="rw-badge-label">Silver Tier</span>
+                </div>
+                <div class="rw-badge-item">
+                  <div class="rw-badge-icon rw-badge-gold">
+                    <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"
+                      viewBox="0 0 24 24">
+                      <path d="M20 12a8 8 0 0 1-16 0V6l8-3 8 3v6z"></path>
+                      <path d="M12 3v9m0 0-4-2m4 2 4-2"></path>
+                    </svg>
+                    <span class="rw-badge-pill">In progress</span>
+                  </div>
+                  <span class="rw-badge-count">4</span>
+                  <span class="rw-badge-label">Gold Tier</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="rw-missions-col">
+              <div class="rw-mission-card">
+                <div class="rw-mission-icon">
+                  <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                </div>
+                <div class="rw-mission-body">
+                  <span class="rw-mission-title">Refer a friend</span>
+                  <span class="rw-mission-meta">Refer &amp; earn rewards up to RM225. Unlimited.</span>
+                  <span class="rw-mission-time">57 days left</span>
+                </div>
+              </div>
+              <div class="rw-mission-card">
+                <div class="rw-mission-icon">
+                  <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                  </svg>
+                </div>
+                <div class="rw-mission-body">
+                  <span class="rw-mission-title">Drawdown from FlexiCredit</span>
+                  <span class="rw-mission-meta">Earn unlimited chances to win 100% cashback.</span>
+                  <span class="rw-mission-time">27 days left</span>
+                </div>
+              </div>
+              <div class="rw-mission-card">
+                <div class="rw-mission-icon">
+                  <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                </div>
+                <div class="rw-mission-body">
+                  <span class="rw-mission-title">Complete 3 Lessons</span>
+                  <span class="rw-mission-meta">Earn 100 XP &middot; 2 of 3 done.</span>
+                  <span class="rw-mission-time">27 days left</span>
+                </div>
+              </div>
+              <div class="rw-view-all-btn-wrap">
+                <button class="rw-view-all-btn">View all missions</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="rw-section">
+            <h2 class="rw-section-title">Redeemable Rewards</h2>
+            <div class="rw-redeem-list">
+              <div class="rw-redeem-row">
+                <div class="rw-redeem-icon accent-purple">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                  </svg>
+                </div>
+                <div class="rw-redeem-body">
+                  <span class="rw-redeem-title">RM10 Cashback Voucher</span>
+                  <span class="rw-redeem-meta">500 XP required</span>
+                </div>
+                <button class="btn-sm">Redeem</button>
+              </div>
+              <div class="rw-redeem-row">
+                <div class="rw-redeem-icon accent-purple">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                  </svg>
+                </div>
+                <div class="rw-redeem-body">
+                  <span class="rw-redeem-title">Advanced Investment Course</span>
+                  <span class="rw-redeem-meta">300 XP required</span>
+                </div>
+                <button class="btn-sm">Redeem</button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <div id="page-discover" class="page-container" style="display: none;">
+        <main class="page-layout">
+          <div class="page-section">
+            <h1 class="page-title">Savings &amp; Spendings</h1>
+            <p class="page-subtitle">A detailed breakdown of your financial health and progress.</p>
+          </div>
+
+          <div class="financial-details-grid">
+            <!-- Spending Detail -->
+            <div class="detail-card">
+              <h2 class="section-heading">Detailed Spendings</h2>
+              <div class="spending-analysis">
+                <div class="progress-ring-v2 large">
+                  <svg width="180" height="180">
+                    <circle class="ring-bg" cx="90" cy="90" r="82"></circle>
+                    <circle class="ring-fill" id="detail-spending-ring-fill" cx="90" cy="90" r="82"></circle>
+                  </svg>
+                  <div class="ring-content">
+                    <span class="spent-pct" id="detail-spent-pct">0%</span>
+                    <span class="spent-label">Used</span>
+                  </div>
+                </div>
+                <div class="spending-breakdown">
+                  <div class="breakdown-item">
+                    <span class="label">Monthly Income</span>
+                    <span class="val">RM 1,000.00</span>
+                  </div>
+                  <div class="breakdown-item">
+                    <span class="label">Savings Target</span>
+                    <span class="val highlight-savings">- RM 300.00</span>
+                  </div>
+                  <div class="breakdown-item border-top">
+                    <span class="label">Disposable Budget</span>
+                    <span class="val">RM 700.00</span>
+                  </div>
+                </div>
+              </div>
+              <div class="chart-placeholder">
+                <span class="placeholder-text">Weekly Spending Trend Graph</span>
+                <div class="mini-bar-chart">
+                  <div class="bar" style="height: 40%"></div>
+                  <div class="bar" style="height: 60%"></div>
+                  <div class="bar" style="height: 30%"></div>
+                  <div class="bar" style="height: 80%"></div>
+                  <div class="bar" style="height: 50%"></div>
+                  <div class="bar" style="height: 70%"></div>
+                  <div class="bar" style="height: 45%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Savings Detail -->
+            <div class="detail-card">
+              <h2 class="section-heading">Savings Progress</h2>
+              <div class="jar-visual-container large">
+                <img id="detail-saving-jar-img" src="assets/jar/1.svg" alt="Saving Jar" class="jar-img-large">
+                <div class="jar-stats">
+                  <span class="jar-pct-large" id="detail-jar-pct">0%</span>
+                  <span class="jar-target-large">Goal: RM 300</span>
+                </div>
+              </div>
+              <div class="savings-milestones">
+                <div class="milestone-row">
+                  <span class="milestone-label">Current Balance</span>
+                  <span class="milestone-val" id="detail-jar-saved-amount">RM 0.00</span>
+                </div>
+                <div class="milestone-row">
+                  <span class="milestone-label">Projected Completion</span>
+                  <span class="milestone-val">22 Days</span>
+                </div>
+                <div class="milestone-progress-bar">
+                  <div class="progress-track">
+                    <div id="detail-milestone-fill" class="progress-fill" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 1rem;">
+                  <button class="auth-btn" id="btn-save-in-detail"
+                    style="padding: 0.6rem 0; width: 120px; font-size: 0.9rem;">Save In</button>
+                  <button class="auth-btn secondary-btn" id="btn-withdraw-detail"
+                    style="padding: 0.6rem 0; width: 120px; font-size: 0.9rem; background: var(--bg-panel-light); border: 1px solid var(--accent-primary);">Withdraw</button>
+                </div>              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <div id="page-me" class="page-container" style="display: none;">
+        <main class="page-layout">
+          <div class="page-section">
+            <div class="profile-hero">
+              <div class="profile-avatar">
+                <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <div class="profile-info">
+                <h2 class="profile-name">Johnathan Doe</h2>
+                <span class="profile-email">user@projectorion.test</span>
+              </div>
+              <div class="profile-badge">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="8" r="7"></circle>
+                  <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+                </svg>
+                <span>Gold Saver</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="page-section">
+            <h2 class="section-heading">Account</h2>
+            <div class="list-group">
+              <div class="list-row list-row--clickable">
+                <div class="list-icon-wrap">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </div>
+                <div class="list-body"><span class="list-title">Personal Details</span></div>
+                <svg class="list-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                  viewBox="0 0 24 24">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+              <div class="list-row list-row--clickable">
+                <div class="list-icon-wrap">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                  </svg>
+                </div>
+                <div class="list-body"><span class="list-title">Security &amp; Privacy</span></div>
+                <svg class="list-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                  viewBox="0 0 24 24">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+              <div class="list-row list-row--clickable">
+                <div class="list-icon-wrap">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                  </svg>
+                </div>
+                <div class="list-body"><span class="list-title">Spending Limits</span></div>
+                <svg class="list-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                  viewBox="0 0 24 24">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="page-section">
+            <h2 class="section-heading">Preferences</h2>
+            <div class="list-group">
+              <div class="list-row list-row--clickable">
+                <div class="list-icon-wrap">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                  </svg>
+                </div>
+                <div class="list-body"><span class="list-title">Notifications</span></div>
+                <svg class="list-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                  viewBox="0 0 24 24">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+              <div class="list-row list-row--clickable">
+                <div class="list-icon-wrap">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                      d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                  </svg>
+                </div>
+                <div class="list-body"><span class="list-title">App Settings</span></div>
+                <svg class="list-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                  viewBox="0 0 24 24">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+              <div class="list-row list-row--clickable">
+                <div class="list-icon-wrap">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                </div>
+                <div class="list-body"><span class="list-title">Help &amp; Support</span></div>
+                <svg class="list-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                  viewBox="0 0 24 24">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="page-section">
+            <button class="btn-danger" id="btn-logout">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              Sign Out
+            </button>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <div id="modal-container" class="modal-overlay" style="display: none;">
+    <!-- Add Money Modal -->
+    <div id="modal-add-money" class="modal-content auth-box" style="display: none;">
+      <h2>Add Money</h2>
+      <form id="add-money-form" class="auth-form">
+        <input type="number" id="add-amount" class="auth-input" placeholder="Amount (RM)" step="0.01" required>
+        <select id="bank-select" class="auth-input" required style="appearance: none; background: rgba(0,0,0,0.2);">
+          <option value="" disabled selected>Select Bank</option>
+          <option value="maybank">Maybank2u</option>
+          <option value="cimb">CIMB Clicks</option>
+          <option value="pbb">Public Bank</option>
+          <option value="rhb">RHB Now</option>
+        </select>
+        <button type="submit" class="auth-btn">Proceed to Bank</button>
+        <button type="button" class="auth-btn secondary-btn close-modal"
+          style="background: var(--bg-panel-light); margin-top: 8px;">Cancel</button>
+      </form>
+    </div>
+
+    <!-- Send Money Modal -->
+    <div id="modal-send-money" class="modal-content auth-box" style="display: none;">
+      <h2>Send Money</h2>
+      <form id="send-money-form" class="auth-form">
+        <input type="email" id="send-email" class="auth-input" placeholder="Recipient Email" required>
+        <input type="number" id="send-amount" class="auth-input" placeholder="Amount (RM)" step="0.01" required>
+        <button type="submit" class="auth-btn">Send Now</button>
+        <button type="button" class="auth-btn secondary-btn close-modal"
+          style="background: var(--bg-panel-light); margin-top: 8px;">Cancel</button>
+      </form>
+      <div id="send-money-error" class="error-msg"></div>
+    </div>
+
+    <!-- Save Money Modal -->
+    <div id="modal-save-money" class="modal-content auth-box" style="display: none;">
+      <h2>Save to Jar</h2>
+      <form id="save-money-form" class="auth-form">
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">Move money from your balance to
+          your saving jar.</p>
+        <input type="number" id="save-amount" class="auth-input" placeholder="Amount (RM)" step="0.01" required>
+        <button type="submit" class="auth-btn">Save Money</button>
+        <button type="button" class="auth-btn secondary-btn close-modal"
+          style="background: var(--bg-panel-light); margin-top: 8px;">Cancel</button>
+      </form>
+      <div id="save-money-error" class="error-msg"></div>
+    </div>
+
+    <!-- Withdraw Money Modal -->
+    <div id="modal-withdraw-money" class="modal-content auth-box" style="display: none;">
+      <h2>Withdraw from Jar</h2>
+      <form id="withdraw-money-form" class="auth-form">
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">Transfer funds back to your
+          account balance.</p>
+        <input type="number" id="withdraw-amount" class="auth-input" placeholder="Amount (RM)" step="0.01" required>
+        <button type="submit" class="auth-btn">Withdraw Now</button>
+        <button type="button" class="auth-btn secondary-btn close-modal"
+          style="background: var(--bg-panel-light); margin-top: 8px;">Cancel</button>
+      </form>
+      <div id="withdraw-money-error" class="error-msg"></div>
+    </div>
+
+    <!-- QR Scanner Modal -->
+    <div id="modal-scan-qr" class="modal-content auth-box" style="display: none;">
+      <h2>Scan QR</h2>
+      <div class="qr-placeholder"
+        style="border: 2px dashed var(--accent-primary); padding: 3rem; margin: 1rem 0; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+        <svg width="64" height="64" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
+          <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+          <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+          <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+          <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+          <rect x="7" y="7" width="10" height="10" rx="1"></rect>
+        </svg>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">Scanner Active...</p>
+      </div>
+      <button type="button" class="auth-btn close-modal">Close Scanner</button>
+    </div>
+  </div>
+
+  <script type="module" src="./script.js"></script>
+</body>
+
 </html>
