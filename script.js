@@ -134,6 +134,34 @@ async function addXP(amount, reason = "") {
     console.error("addXP sync error:", err);
   }
 
+  // Save XP, tier
+  await supabase.from('user_progress').upsert({
+    user_id: userProfile.id,
+    xp: userProfile.xp,
+    tier: newTier
+  });
+
+  userProfile.xp = userProfile.xp;
+  userProfile.tier = newTier;
+
+  // Badge unlock
+  if (newTier > oldTier) {
+    for (let t = oldTier + 1; t <= newTier; t++) {
+      const badge = BADGES.find(b => b.tierRequired === t);
+
+      if (badge) {
+        await supabase.from('user_badges').insert({
+          user_id: userProfile.id,
+          badge_id: badge.id
+        });
+
+        if (!unlockedBadges.find(ub => ub.id === badge.id)) {
+          unlockedBadges.push(badge);
+        }
+      }
+    }
+  }
+
   return { xpAdded: amount, newTier, unlockedBadges };
 }
 
@@ -224,13 +252,13 @@ async function syncUserData() {
 
     // 2. Fetch Today's Spendings & Savings
     const today = new Date();
-    today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
     const { data: todayTxs } = await supabase
       .from('transactions')
       .select('amount, type')
       .eq('user_id', userProfile.id)
       .gte('created_at', today.toISOString());
-    
+
     userProfile.spent_today = todayTxs?.filter(tx => tx.type === 'send').reduce((sum, tx) => sum + Number(tx.amount), 0) || 0;
     userProfile.saved_today = todayTxs?.filter(tx => tx.type === 'save').reduce((sum, tx) => sum + Number(tx.amount), 0) || 0;
 
@@ -241,7 +269,7 @@ async function syncUserData() {
       .eq('user_id', userProfile.id)
       .order('created_at', { ascending: false })
       .limit(10);
-    
+
     renderTransactions(transactions || []);
 
   } catch (err) {
@@ -263,7 +291,7 @@ function renderTransactions(transactions) {
     const amountPrefix = isPositive ? '+' : '-';
     const amountClass = isPositive ? 'positive' : 'negative';
     const date = new Date(tx.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-    
+
     return `
       <div class="tx-item">
         <div class="tx-left">
@@ -323,7 +351,7 @@ function updateSpendingRing() {
 
 function updateSavingJar() {
   const percentage = (userProfile.saving_balance / userProfile.savings_goal) * 100;
-  
+
   let stage = 1;
   if (percentage >= 110) {
     stage = 9;
@@ -345,7 +373,7 @@ function updateSavingJar() {
   if (detailJarImg) detailJarImg.src = jarSrc;
   updateText('detail-jar-pct', `${Math.round(percentage)}%`);
   updateText('detail-jar-saved-amount', `RM ${userProfile.saving_balance.toFixed(2)}`);
-  
+
   const milestoneFill = document.getElementById('detail-milestone-fill');
   if (milestoneFill) milestoneFill.style.width = `${Math.min(100, percentage)}%`;
 }
@@ -450,7 +478,7 @@ async function sendMoney(email, amount) {
     .select('id, balance')
     .eq('email', email)
     .single();
-  
+
   if (!recipient) {
     showError('send-money-error', 'User not found');
     return;
@@ -491,9 +519,9 @@ async function saveMoney(amount) {
 
   const { error } = await supabase
     .from('profiles')
-    .update({ 
+    .update({
       balance: userProfile.balance - amount,
-      saving_balance: userProfile.saving_balance + amount 
+      saving_balance: userProfile.saving_balance + amount
     })
     .eq('id', userProfile.id);
 
@@ -535,8 +563,8 @@ function withdrawMoney(amount) {
   openModal('confirmWithdraw');
 }
 
-  // const confirmWithdraw = confirm(`Are you sure you want to withdraw RM ${amount.toFixed(2)} from your jar?`);
-  // if (!confirmWithdraw) return;
+// const confirmWithdraw = confirm(`Are you sure you want to withdraw RM ${amount.toFixed(2)} from your jar?`);
+// if (!confirmWithdraw) return;
 
 async function processWithdraw() {
   const amount = pendingWithdrawAmount;
@@ -560,7 +588,7 @@ async function processWithdraw() {
 
   const { error } = await supabase
     .from('profiles')
-    .update({ 
+    .update({
       balance: userProfile.balance + amount,
       saving_balance: userProfile.saving_balance - amount,
       streak: newStreak
@@ -611,7 +639,7 @@ function routeTo(page) {
 async function updateProfile() {
   const nameEl = document.querySelector('.profile-name');
   const emailEl = document.querySelector('.profile-email');
-  
+
   if (nameEl) nameEl.textContent = userProfile.name;
   if (emailEl) emailEl.textContent = userProfile.email;
 }
@@ -631,7 +659,7 @@ function initActivityTabs() {
   tabs.forEach(tab => {
     const newTab = tab.cloneNode(true);
     tab.parentNode.replaceChild(newTab, tab);
-    
+
     newTab.addEventListener('click', () => {
       const target = newTab.getAttribute('data-tab');
       document.querySelectorAll('.activity-tab').forEach(t => t.classList.remove('active'));
