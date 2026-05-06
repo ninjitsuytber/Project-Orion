@@ -24,10 +24,12 @@ const modals = {
   send: document.getElementById('modal-send-money'),
   save: document.getElementById('modal-save-money'),
   withdraw: document.getElementById('modal-withdraw-money'),
+  confirmWithdraw: document.getElementById('modal-confirm-withdraw'),
   qr: document.getElementById('modal-scan-qr'),
 };
 
 // App State
+let pendingWithdrawAmount = 0;
 let isDemo = false;
 let isBalanceHidden = false;
 let userProfile = {
@@ -200,7 +202,7 @@ function updateSavingJar() {
   const percentage = (userProfile.saving_balance / userProfile.savings_goal) * 100;
   
   let stage = 1;
-  if (percentage >= 125) {
+  if (percentage >= 110) {
     stage = 9;
   } else if (percentage >= 100) {
     stage = 8;
@@ -392,7 +394,7 @@ async function saveMoney(amount) {
   }
 }
 
-async function withdrawMoney(amount) {
+function withdrawMoney(amount) {
   if (isNaN(amount) || amount <= 0) {
     showError('withdraw-money-error', 'Please enter a valid amount greater than zero');
     return;
@@ -402,8 +404,21 @@ async function withdrawMoney(amount) {
     return;
   }
 
-  const confirmWithdraw = confirm(`Are you sure you want to withdraw RM ${amount.toFixed(2)} from your jar?`);
-  if (!confirmWithdraw) return;
+  const errorEl = document.getElementById('withdraw-money-error');
+  if (errorEl) errorEl.style.display = 'none';
+
+  pendingWithdrawAmount = amount;
+  document.getElementById('confirm-withdraw-text').textContent = `Are you sure you want to withdraw RM ${amount.toFixed(2)} from your jar?`;
+
+  openModal('confirmWithdraw');
+}
+
+  // const confirmWithdraw = confirm(`Are you sure you want to withdraw RM ${amount.toFixed(2)} from your jar?`);
+  // if (!confirmWithdraw) return;
+
+async function processWithdraw() {
+  const amount = pendingWithdrawAmount;
+  if (amount <= 0) return;
 
   // Streak logic: If withdraw amount >= total saved today, streak is lost
   let newStreak = userProfile.streak;
@@ -626,6 +641,7 @@ document.getElementById('btn-send-money')?.addEventListener('click', () => openM
 document.getElementById('btn-scan-qr')?.addEventListener('click', () => openModal('qr'));
 document.getElementById('btn-save-in-detail')?.addEventListener('click', () => openModal('save'));
 document.getElementById('btn-withdraw-detail')?.addEventListener('click', () => openModal('withdraw'));
+document.getElementById('btn-confirm-withdraw-yes')?.addEventListener('click', processWithdraw);
 
 document.querySelectorAll('.close-modal').forEach(btn => {
   btn.addEventListener('click', closeModal);
