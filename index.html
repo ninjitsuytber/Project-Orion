@@ -156,11 +156,7 @@
       <!-- Pages -->
       <div id="page-home" class="page-container" style="display: none;">
         <div class="notice-bar">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-          </svg>
+          <span style="font-size: 1rem; line-height: 1;">✦</span>
           <span>Scheduled maintenance for a better learning experience</span>
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -514,46 +510,11 @@
             <div class="rw-card">
               <div class="rw-card-header">
                 <span class="rw-card-title">Badges</span>
-                <a href="#" class="rw-view-all">View all</a>
+                <a href="#" id="btn-view-all-badges" class="rw-view-all">View all</a>
               </div>
-              <div class="rw-badges-row">
-                <div class="rw-badge-item">
-                  <div class="rw-badge-icon rw-badge-bronze">
-                    <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"
-                      viewBox="0 0 24 24">
-                      <path d="M20 12a8 8 0 0 1-16 0V6l8-3 8 3v6z"></path>
-                      <path d="M12 3v9m0 0-4-2m4 2 4-2"></path>
-                    </svg>
-                    <span class="rw-badge-pill">In progress</span>
-                  </div>
-                  <span class="rw-badge-count">0</span>
-                  <span class="rw-badge-label">Bronze Tier</span>
-                </div>
-                <div class="rw-badge-item">
-                  <div class="rw-badge-icon rw-badge-silver">
-                    <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"
-                      viewBox="0 0 24 24">
-                      <path d="M20 12a8 8 0 0 1-16 0V6l8-3 8 3v6z"></path>
-                      <path d="M12 3v9m0 0-4-2m4 2 4-2"></path>
-                    </svg>
-                    <span class="rw-badge-pill">In progress</span>
-                  </div>
-                  <span class="rw-badge-count">2</span>
-                  <span class="rw-badge-label">Silver Tier</span>
-                </div>
-                <div class="rw-badge-item">
-                  <div class="rw-badge-icon rw-badge-gold">
-                    <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"
-                      viewBox="0 0 24 24">
-                      <path d="M20 12a8 8 0 0 1-16 0V6l8-3 8 3v6z"></path>
-                      <path d="M12 3v9m0 0-4-2m4 2 4-2"></path>
-                    </svg>
-                    <span class="rw-badge-pill">In progress</span>
-                  </div>
-                  <span class="rw-badge-count">4</span>
-                  <span class="rw-badge-label">Gold Tier</span>
-                </div>
+               <div id="badge-preview-row" class="rw-badges-row">
               </div>
+              <div id="all-badges" style="display: none;"></div>
             </div>
 
             <div class="rw-missions-col">
@@ -679,8 +640,8 @@
                     <span class="val">RM <span id="cat-transport-left">0.00</span> / <span id="cat-transport-total" style="color: var(--text-secondary); font-size: 0.85em;">0.00</span></span>
                   </div>
                   <div class="breakdown-item">
-                    <span class="label">Housing</span>
-                    <span class="val">RM <span id="cat-housing-left">0.00</span> / <span id="cat-housing-total" style="color: var(--text-secondary); font-size: 0.85em;">0.00</span></span>
+                    <span class="label">Grocery</span>
+                    <span class="val">RM <span id="cat-grocery-left">0.00</span> / <span id="cat-grocery-total" style="color: var(--text-secondary); font-size: 0.85em;">0.00</span></span>
                   </div>
                   <div class="breakdown-item border-top">
                     <span class="label">Entertainment & Others</span>
@@ -798,16 +759,6 @@
                   </svg>
                 </div>
                 <div class="list-body"><span class="list-title">Spending Limits</span></div>
-
-                  <div class="set-daily-spending">
-                    <div class="daily-spending-header">
-                      <h1>Set up your daily spending limits</h1>
-                    </div>
-                    <div class="daily-spending-input">
-                      <input class="daily-spending-input" placeholder="Amount (RM)">
-                      <button class="daily-spending-enter">Enter</button>
-                    </div>
-                  </div>
 
                 <svg class="list-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
                   viewBox="0 0 24 24">

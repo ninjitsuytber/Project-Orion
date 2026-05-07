@@ -61,6 +61,119 @@ const BADGE_THEMES = [
   { tier: 10, color: '#e0f7ff', bg: 'rgba(224,247,255,0.22)' },  // Diamond
 ];
 
+const BADGE_ASSETS = {
+
+  b1: {
+    color: "assets/badges/b1.svg",
+    black: "assets/badges/black/b1.svg"
+  },
+
+  b2: {
+    color: "assets/badges/b2.svg",
+    black: "assets/badges/black/b2.svg"
+  },
+
+  b3: {
+    color: "assets/badges/b3.svg",
+    black: "assets/badges/black/b3.svg"
+  },
+
+  b4: {
+    color: "assets/badges/b4.svg",
+    black: "assets/badges/black/b4.svg"
+  },
+
+  b5: {
+    color: "assets/badges/b5.svg",
+    black: "assets/badges/black/b5.svg"
+  },
+
+  b6: {
+    color: "assets/badges/b6.svg",
+    black: "assets/badges/black/b6.svg"
+  },
+
+  b7: {
+    color: "assets/badges/b7.svg",
+    black: "assets/badges/black/b7.svg"
+  },
+
+  b8: {
+    color: "assets/badges/b8.svg",
+    black: "assets/badges/black/b8.svg"
+  },
+
+  b9: {
+    color: "assets/badges/b9.svg",
+    black: "assets/badges/black/b9.svg"
+  },
+
+  b10: {
+    color: "assets/badges/b10.svg",
+    black: "assets/badges/black/b10.svg"
+  }
+
+};
+
+//Show 3 badges: current tier badge in center, previous and next tier badges on sides (if they exist)
+function renderBadgePreview() {
+  const container = document.getElementById("badge-preview-row");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const currentTier = userProfile.tier;
+
+  const prevBadge = BADGES.find(b => b.tierRequired === currentTier - 1);
+  const currBadge = BADGES.find(b => b.tierRequired === currentTier);
+  const nextBadge = BADGES.find(b => b.tierRequired === currentTier + 1);
+
+const preview = [prevBadge, currBadge, nextBadge].filter(Boolean);
+
+preview.forEach(badge => {
+
+  const unlocked = calculateTier(userProfile.xp) >= badge.tierRequired;
+
+  const asset = BADGE_ASSETS[badge.id];
+  if (!asset) return;
+  const img = unlocked ? asset.color : asset.black;
+
+  container.innerHTML += `
+    <div class="rw-badge-item">
+      <img src="${img}" class="rw-badge-icon">
+      <span class="rw-badge-label">${badge.name}</span>
+    </div>
+  `;
+});
+}
+
+//Show all badges in rewards page
+function renderAllBadges() {
+  const container = document.getElementById("all-badges");
+  if (!container) return;
+
+  let html = "";
+
+  BADGES.forEach(badge => {
+
+    const unlocked = calculateTier(userProfile.xp) >= badge.tierRequired;
+
+    const img = unlocked
+      ? BADGE_ASSETS[badge.id].color
+      : BADGE_ASSETS[badge.id].black;
+
+    html += `
+      <div class="rw-badge-item">
+        <img src="${img}" class="rw-badge-icon">
+        <span class="rw-badge-label">${badge.name}</span>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+
 function renderWeeklyTrend() {
     const chartContainer = document.querySelector('.mini-bar-chart');
     if (!chartContainer || !userProfile.weekly_history) return;
@@ -94,34 +207,24 @@ function calculateTier(xp) {
   return tier;
 }
 
-//Badge Unlock
-function unlockBadge(tier) {
-  const badge = BADGES.find(b => Number(b.tierRequired) === Number(tier));
 
-  if (!badge) return null;
-
-  if (!userProfile.badges.includes(badge.id)) {
-    userProfile.badges.push(badge.id);
-    console.log("Congratulations! Badge Unlocked:", badge.name);
-    return badge;
-  }
-
-  return null;
-}
 
 //Add XP
 async function addXP(amount, reason = "") {
   const oldTier = userProfile.tier;
+
   userProfile.xp = Math.max(0, userProfile.xp + amount);
   const newTier = calculateTier(userProfile.xp);
   userProfile.tier = newTier;
+  renderAllBadges();
+  renderBadgePreview();
 
   let unlockedBadges = [];
+
   if (newTier > oldTier) {
     for (let t = oldTier + 1; t <= newTier; t++) {
       const badge = BADGES.find(b => b.tierRequired === t);
-      if (badge && !userProfile.badges.includes(badge.id)) {
-        userProfile.badges.push(badge.id);
+      if (badge) {
         unlockedBadges.push(badge);
       }
     }
@@ -139,18 +242,26 @@ async function addXP(amount, reason = "") {
       tier: newTier
     });
 
-    // Mirror XP on the profiles row for easy querying
-    await supabase.from('profiles').update({ xp: userProfile.xp }).eq('id', userProfile.id);
+    // 2. Mirror XP in profiles table
+    await supabase
+      .from('profiles')
+      .update({ xp: userProfile.xp })
+      .eq('id', userProfile.id);
 
-    // 2. Insert new badges into DB
+    // 3. Insert new badges
     for (const badge of unlockedBadges) {
-      await supabase.from('user_badges').insert({
-        user_id: userProfile.id,
-        badge_id: badge.id
-      });
+      await supabase
+        .from('user_badges')
+        .upsert(
+          {
+            user_id: userProfile.id,
+            badge_id: badge.id
+          },
+          { onConflict: ['user_id', 'badge_id'] }
+        );
     }
 
-    // 3. Log Activity
+    // 4. Log activity
     await supabase.from('app_activities').insert([{
       user_id: userProfile.id,
       activity_name: reason,
@@ -211,8 +322,8 @@ let userProfile = {
   monthly_income: 1000,
   savings_goal: 1,
   weekly_history: 0,
-  category_budgets: { housing: 0, food: 0, transport: 0, others: 0 },
-  category_spent: { housing: 0, food: 0, transport: 0, others: 0 }
+  category_budgets: { food: 0, transport: 0, grocery: 0, others: 0 },
+  category_spent: { food: 0, transport: 0, grocery: 0, others: 0 }
 };
 
 async function renderApp() {
@@ -239,8 +350,8 @@ async function renderApp() {
         id: null, name: 'User', email: '', balance: 0, saving_balance: 0,
         spent_today: 0, saved_today: 0, streak: 0, xp: 0, tier: 1,
         badges: ['b1'], age_range: '', monthly_income: 1000, savings_goal: 1,
-        category_budgets: { housing: 0, food: 0, transport: 0, others: 0 },
-        category_spent: { housing: 0, food: 0, transport: 0, others: 0 }
+        category_budgets: { food: 0, transport: 0, grocery: 0, others: 0 },
+        category_spent: { food: 0, transport: 0, grocery: 0, others: 0 }
       });
       if (!isDemo) showLogin();
     }
@@ -309,14 +420,15 @@ async function syncUserData() {
       userProfile.saving_balance = Number(profile.saving_balance) || 0;
       userProfile.streak = Number(profile.streak) || 0;
       userProfile.savings_goal = Number(profile.savings_goal) || 300;
-      userProfile.monthly_income = Number(profile.monthly_income) || 0; // NEW
+      userProfile.monthly_income = Number(profile.monthly_income) || 0;
       userProfile.age_range = profile.age_range || '';
       if (userProfile.monthly_income > 0) {
+        const dailyLimit = Math.max(0, (userProfile.monthly_income - (userProfile.savings_goal || userProfile.monthly_income * 0.2)) / 30);
         userProfile.category_budgets = {
-          housing: userProfile.monthly_income * 0.30,
-          food: userProfile.monthly_income * 0.20,
-          transport: userProfile.monthly_income * 0.15,
-          others: userProfile.monthly_income * 0.15
+          food:      dailyLimit * 0.35,
+          transport: dailyLimit * 0.20,
+          grocery:   dailyLimit * 0.25,
+          others:    dailyLimit * 0.20
         };
       }
     } else {
@@ -343,6 +455,8 @@ async function syncUserData() {
     if (progress) {
       userProfile.xp = Number(progress.xp) || 0;
       userProfile.tier = calculateTier(userProfile.xp);
+      renderAllBadges();
+      renderBadgePreview();
     } else {
       // Initialize progress if not found
       await supabase.from('user_progress').insert([{ user_id: userProfile.id, xp: 0, tier: 1 }]);
@@ -373,15 +487,8 @@ async function syncUserData() {
     userProfile.spent_today = todayTxs?.filter(tx => tx.type === 'send').reduce((sum, tx) => sum + Number(tx.amount), 0) || 0;
     userProfile.saved_today = todayTxs?.filter(tx => tx.type === 'save').reduce((sum, tx) => sum + Number(tx.amount), 0) || 0;
 
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const { data: monthTxs } = await supabase
-      .from('transactions')
-      .select('amount, type, category, description')
-      .eq('user_id', userProfile.id)
-      .gte('created_at', startOfMonth.toISOString());
-    
     let dailySpentTotal = 0;
-    let categorySpentDaily = { housing: 0, food: 0, transport: 0, others: 0 };
+    let categorySpentDaily = { food: 0, transport: 0, grocery: 0, others: 0 };
 
     if (todayTxs) {
       todayTxs.forEach(tx => {
@@ -393,15 +500,15 @@ async function syncUserData() {
           const rawDesc = tx.description || '';
           const match = rawDesc.match(/^\[(.*?)\]/);
           const cat = match ? match[1].toLowerCase() : 'others';
-          
-          if (['food', 'grocery'].includes(cat)) {
+
+          if (cat === 'food') {
             categorySpentDaily.food += amt;
-          } else if (['transport'].includes(cat)) {
+          } else if (cat === 'transport') {
             categorySpentDaily.transport += amt;
-          } else if (['housing', 'telco', 'insurance'].includes(cat)) {
-            categorySpentDaily.housing += amt;
+          } else if (cat === 'grocery') {
+            categorySpentDaily.grocery += amt;
           } else {
-            categorySpentDaily.others += amt; 
+            categorySpentDaily.others += amt;
           }
         }
       });
@@ -555,19 +662,18 @@ function updateDailySpendingsUI() {
   setRingProgress('detail-spending-ring-fill', 82, spentPercentage);
 
   const dailyCatLimits = {
-    food: (salary * 0.20) / 30,
-    transport: (salary * 0.15) / 30,
-    housing: (salary * 0.30) / 30,
-    others: (salary * 0.15) / 30
+    food:      globalDailyLimit * 0.35,
+    transport: globalDailyLimit * 0.20,
+    grocery:   globalDailyLimit * 0.25,
+    others:    globalDailyLimit * 0.20
   };
 
-  const cats = ['food', 'transport', 'housing', 'others'];
+  const cats = ['food', 'transport', 'grocery', 'others'];
   cats.forEach(cat => {
     const limit = dailyCatLimits[cat] || 0;
     const spent = userProfile.category_spent[cat] || 0;
-    const remaining = Math.max(0, limit - spent);
 
-    updateText(`cat-${cat}-left`, remaining.toFixed(2));
+    updateText(`cat-${cat}-left`, spent.toFixed(2));
     updateText(`cat-${cat}-total`, limit.toFixed(2));
   });
 }
@@ -582,6 +688,8 @@ async function updateDashboard() {
   updateDailySpendingsUI();
   renderWeeklyTrend();
   initActivityTabs();
+  renderBadgePreview();
+  renderAllBadges();
 }
 
 function updateRewardsUI() {
@@ -589,10 +697,15 @@ function updateRewardsUI() {
   updateText('rw-streak-val', `${userProfile.streak} Days`);
   updateText('rw-total-xp', `${userProfile.xp} XP`);
   
-  const currentBadge = BADGES.find(b => b.tierRequired === userProfile.tier) || BADGES[0];
+  const currentBadge = BADGES.find(b => b.tierRequired === userProfile.tier)
+  || BADGES[0];
+
+  const asset = BADGE_ASSETS[currentBadge.id];
   const badgeImg = document.getElementById('rw-current-badge-img');
-  if (badgeImg) badgeImg.src = currentBadge.img;
-  updateText('rw-badge-name', currentBadge.name);
+
+  if (badgeImg && asset) {
+  badgeImg.src = asset.color;
+}
 
   // Sync Home Page Rewards Widget
   const homeGiftBoxes = document.getElementById('home-gift-boxes');
@@ -609,6 +722,7 @@ function updateRewardsUI() {
       }
     });
   }
+  renderBadgePreview();
 }
 
 function updateBalanceUI() {
@@ -986,15 +1100,19 @@ function routeTo(page) {
   if (page === 'home') {
     pageHome.style.display = 'block';
     updateDashboard();
+    initWaveAnimation('.spending-card');
     window.dispatchEvent(new Event('resize'));
-  } else if (page === 'rewards') {
-    pageRewards.style.display = 'block';
-  } else if (page === 'discover') {
-    pageDiscover.style.display = 'block';
-    updateDashboard();
-  } else if (page === 'me') {
-    pageMe.style.display = 'block';
-    updateProfile();
+  } else {
+    stopWaveAnimation();
+    if (page === 'rewards') {
+      pageRewards.style.display = 'block';
+    } else if (page === 'discover') {
+      pageDiscover.style.display = 'block';
+      updateDashboard();
+    } else if (page === 'me') {
+      pageMe.style.display = 'block';
+      updateProfile();
+    }
   }
 }
 
@@ -1009,8 +1127,10 @@ async function updateProfile() {
   const badgeImg = document.getElementById('profile-badge-img');
   const badgeName = document.getElementById('profile-badge-name');
 
-  if (badgeImg) badgeImg.src = currentBadge.img;
-  if (badgeName) badgeName.textContent = currentBadge.name;
+const asset = BADGE_ASSETS[currentBadge.id];
+if (badgeImg && asset) {
+  badgeImg.src = asset.color;
+}
 
   const theme = BADGE_THEMES.find(t => t.tier === userProfile.tier) || BADGE_THEMES[0];
   const container = document.getElementById('profile-badge-container');
@@ -1049,7 +1169,18 @@ function initActivityTabs() {
   });
 }
 
+let _waveAnimId = null;
+
+function stopWaveAnimation() {
+  if (_waveAnimId !== null) {
+    cancelAnimationFrame(_waveAnimId);
+    _waveAnimId = null;
+  }
+}
+
 function initWaveAnimation(selector) {
+    if (_waveAnimId !== null) return;
+
     const container = document.querySelector(selector);
     if (!container) return;
 
@@ -1174,7 +1305,7 @@ function initWaveAnimation(selector) {
         }
 
         speedInc += params.SPEED;
-        requestAnimationFrame(render);
+        _waveAnimId = requestAnimationFrame(render);
     };
 
     /*Height of the wave*/
@@ -1183,10 +1314,9 @@ function initWaveAnimation(selector) {
 
     window.addEventListener('resize', resize);
     resize();
-    render();
+    _waveAnimId = requestAnimationFrame(render);
 }
 
-initWaveAnimation('.spending-card');
 // Navigation Listeners
 document.getElementById('nav-brand')?.addEventListener('click', () => routeTo('home'));
 navItems.home?.addEventListener('click', () => routeTo('home'));
@@ -1315,6 +1445,27 @@ document.getElementById('withdraw-money-form')?.addEventListener('submit', (e) =
   withdrawMoney(amount);
 });
 
+document.getElementById("btn-view-all-badges")?.addEventListener("click", (e) => {
+  e.preventDefault();
+
+  const all = document.getElementById("all-badges");
+  const preview = document.getElementById("badge-preview-row");
+
+  if (!all || !preview) return;
+
+  const isHidden = getComputedStyle(all).display === "none";
+
+  if (isHidden) {
+    renderAllBadges();
+    all.style.display = "grid";
+    preview.style.display = "none";
+  } else {
+    all.style.display = "none";
+    preview.style.display = "flex";
+  }
+});
+
+
 document.getElementById('btn-add-money')?.addEventListener('click', () => openModal('add'));
 document.getElementById('btn-send-money')?.addEventListener('click', () => openModal('send'));
 document.getElementById('btn-scan-qr')?.addEventListener('click', () => openModal('qr'));
@@ -1375,23 +1526,23 @@ document.getElementById('onboarding-form')?.addEventListener('submit', async (e)
 
   // Financial Rule
   const savingsTarget = salaryVal * 0.20;
-  
+  const dailyLimit = Math.max(0, (salaryVal - savingsTarget) / 30);
+
   userProfile.monthly_income = salaryVal;
   userProfile.savings_goal = savingsTarget;
   userProfile.category_budgets = {
-    housing: salaryVal * 0.30,
-    food: salaryVal * 0.20,
-    transport: salaryVal * 0.15,
-    others: salaryVal * 0.15
+    food:      dailyLimit * 0.35,
+    transport: dailyLimit * 0.20,
+    grocery:   dailyLimit * 0.25,
+    others:    dailyLimit * 0.20
   };
 
-  // Assign mock spent values based on today's total spent for UI demonstration
   const spent = userProfile.spent_today || 0;
   userProfile.category_spent = {
-    housing: 0,
-    food: spent * 0.5,
+    food:      spent * 0.5,
     transport: spent * 0.3,
-    others: spent * 0.2
+    grocery:   0,
+    others:    spent * 0.2
   };
 
   if (isDemo) {
@@ -1414,7 +1565,8 @@ document.getElementById('onboarding-form')?.addEventListener('submit', async (e)
     streak: 0,
     age_range: ageVal,
     monthly_income: salaryVal,
-    savings_goal: savingsTarget
+    savings_goal: savingsTarget,
+    daily_spending_limit: dailyLimit
   });
 
   if (error) {
@@ -1436,22 +1588,24 @@ document.getElementById('update-financials-form')?.addEventListener('submit', as
   const ageVal = document.getElementById('update-age').value;
   const salaryVal = parseInt(document.getElementById('update-salary').value);
   const savingsTarget = salaryVal * 0.20;
+  const dailyLimit = Math.max(0, (salaryVal - savingsTarget) / 30);
 
   userProfile.age_range = ageVal;
   userProfile.monthly_income = salaryVal;
   userProfile.savings_goal = savingsTarget;
   userProfile.category_budgets = {
-    housing: salaryVal * 0.30,
-    food: salaryVal * 0.20,
-    transport: salaryVal * 0.15,
-    others: salaryVal * 0.15
+    food:      dailyLimit * 0.35,
+    transport: dailyLimit * 0.20,
+    grocery:   dailyLimit * 0.25,
+    others:    dailyLimit * 0.20
   };
 
   if (!isDemo && userProfile.id) {
     const { error } = await supabase.from('profiles').update({
       age_range: ageVal,
       monthly_income: salaryVal,
-      savings_goal: savingsTarget
+      savings_goal: savingsTarget,
+      daily_spending_limit: dailyLimit
     }).eq('id', userProfile.id);
 
     if (error) {
@@ -1463,6 +1617,12 @@ document.getElementById('update-financials-form')?.addEventListener('submit', as
   updateDashboard();
   closeModal();
   alert('Your financial profile has been updated!');
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && userProfile.id && !isDemo) {
+    updateDashboard();
+  }
 });
 
 renderApp();
