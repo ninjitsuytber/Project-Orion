@@ -11,6 +11,7 @@ const pageHome = document.getElementById('page-home');
 const pageRewards = document.getElementById('page-rewards');
 const pageDiscover = document.getElementById('page-discover');
 const pageMe = document.getElementById('page-me');
+/*const spend = document.querySelector('.')*/
 
 const navItems = {
   home: document.getElementById('nav-home'),
