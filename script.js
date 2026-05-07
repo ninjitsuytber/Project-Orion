@@ -723,6 +723,7 @@ async function updateDashboard() {
   initActivityTabs();
   renderBadgePreview();
   renderAllBadges();
+  fetchNotice();
 }
 
 function updateRewardsUI() {
@@ -1657,6 +1658,120 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden && userProfile.id && !isDemo) {
     updateDashboard();
   }
+});
+
+// ─── AI Chat ─────────────────────────────────────────────────────────────────
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
+
+async function fetchNotice() {
+  if (!BACKEND_URL || !userProfile.id) return;
+  const recentTx = (userProfile.transactions || []).slice(0, 3)
+    .map(t => `${t.type} RM ${parseFloat(t.amount).toFixed(2)} (${t.description || ''})`)
+    .join(', ');
+  const activity = recentTx || 'no recent transactions';
+  try {
+    const res = await fetch(`${BACKEND_URL}/notice`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recent_activity: activity,
+        daily_limit: userProfile.daily_spending_limit || 0,
+        total_spent_today: Object.values(userProfile.category_spent || {}).reduce((a, b) => a + b, 0),
+      }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.notice) updateText('notice-bar-text', data.notice);
+  } catch (_) {
+    // silently fail — notice bar keeps its last text
+  }
+}
+
+let _chatContext = '';
+
+function buildChatContext() {
+  const spent = Object.values(userProfile.category_spent || {}).reduce((a, b) => a + b, 0);
+  return (
+    `Balance: RM ${(userProfile.balance || 0).toFixed(2)}, ` +
+    `Savings jar: RM ${(userProfile.saving_balance || 0).toFixed(2)}, ` +
+    `Daily limit: RM ${(userProfile.daily_spending_limit || 0).toFixed(2)}, ` +
+    `Spent today: RM ${spent.toFixed(2)}, ` +
+    `Streak: ${userProfile.streak || 0} days, ` +
+    `XP: ${userProfile.xp || 0}`
+  );
+}
+
+const _chatHistory = [];
+
+function openChat() {
+  const overlay = document.getElementById('ai-chat-overlay');
+  if (overlay) {
+    overlay.style.display = 'flex';
+    _chatContext = buildChatContext();
+    document.getElementById('ai-chat-input')?.focus();
+  }
+}
+
+function closeChat() {
+  const overlay = document.getElementById('ai-chat-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function appendChatMessage(role, text) {
+  const container = document.getElementById('ai-chat-messages');
+  if (!container) return;
+  const div = document.createElement('div');
+  div.className = `ai-chat-bubble ${role}`;
+  div.textContent = text;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('ai-chat-input');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  appendChatMessage('user', text);
+  _chatHistory.push({ role: 'user', content: text });
+
+  const sendBtn = document.getElementById('ai-chat-send');
+  if (sendBtn) sendBtn.disabled = true;
+
+  if (!BACKEND_URL) {
+    appendChatMessage('ai', 'Aiyah, backend not connected lah. Add VITE_BACKEND_URL first!');
+    if (sendBtn) sendBtn.disabled = false;
+    return;
+  }
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: _chatHistory, context: _chatContext }),
+    });
+    const data = await res.json();
+    const reply = data.reply || 'Hmm, cannot think right now. Try again lah!';
+    appendChatMessage('ai', reply);
+    _chatHistory.push({ role: 'assistant', content: reply });
+  } catch (_) {
+    appendChatMessage('ai', 'Network problem lah! Check your connection.');
+  } finally {
+    if (sendBtn) sendBtn.disabled = false;
+  }
+}
+
+document.getElementById('notice-bar')?.addEventListener('click', openChat);
+document.getElementById('ai-chat-close')?.addEventListener('click', closeChat);
+document.getElementById('ai-chat-send')?.addEventListener('click', sendChatMessage);
+document.getElementById('ai-chat-input')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendChatMessage();
+});
+document.getElementById('ai-chat-overlay')?.addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeChat();
 });
 
 renderApp();

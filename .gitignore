@@ -8,3 +8,4 @@ dist/
 .vscode/
 .idea/
 *.log
+.claude/

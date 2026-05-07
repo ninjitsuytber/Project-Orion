@@ -155,13 +155,9 @@
 
       <!-- Pages -->
       <div id="page-home" class="page-container" style="display: none;">
-        <div class="notice-bar">
+        <div class="notice-bar" id="notice-bar" style="cursor:pointer;">
           <span style="font-size: 1rem; line-height: 1;">✦</span>
-          <span>Scheduled maintenance for a better learning experience</span>
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
+          <span id="notice-bar-text">Checking your spending habits...</span>
         </div>
 
         <main class="main-content">
@@ -1064,6 +1060,26 @@
       <button type="button" class="auth-btn close-modal">Close</button>
     </div>
 
+  </div>
+
+  <!-- AI Chat Window -->
+  <div id="ai-chat-overlay" class="ai-chat-overlay" style="display:none;">
+    <div class="ai-chat-window">
+      <div class="ai-chat-header">
+        <div class="ai-chat-header-left">
+          <span class="ai-chat-icon">✦</span>
+          <span class="ai-chat-title">Orion AI</span>
+        </div>
+        <button id="ai-chat-close" class="ai-chat-close" aria-label="Close chat">✕</button>
+      </div>
+      <div id="ai-chat-messages" class="ai-chat-messages">
+        <div class="ai-chat-bubble ai">Aiyah, you finally opened me! Ask me anything about your spending lah.</div>
+      </div>
+      <div class="ai-chat-input-row">
+        <input id="ai-chat-input" class="ai-chat-input" type="text" placeholder="Ask Orion AI..." maxlength="300" />
+        <button id="ai-chat-send" class="ai-chat-send">Send</button>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="./script.js"></script>
