@@ -147,6 +147,39 @@ preview.forEach(badge => {
 });
 }
 
+function renderBadgesPopup() {
+
+  const overlay = document.getElementById('badges-popup-overlay');
+  const grid = document.getElementById('badges-popup-grid');
+
+  if (!overlay || !grid) return;
+
+  grid.innerHTML = '';
+
+  BADGES.forEach((badge, index) => {
+
+    const unlocked = userProfile.badges.includes(badge.id);
+
+    const img = unlocked
+      ? BADGE_ASSETS[badge.id].color
+      : BADGE_ASSETS[badge.id].black;
+
+    const isLastSingle = index === BADGES.length - 1;
+
+    grid.innerHTML += `
+      <div class="popup-badge-item ${isLastSingle ? 'last-single' : ''}">
+        
+        <img src="${img}" alt="${badge.name}">
+        
+        <span>${badge.name}</span>
+
+      </div>
+    `;
+  });
+
+  overlay.style.display = 'flex';
+}
+
 //Show all badges in rewards page
 function renderAllBadges() {
   const container = document.getElementById("all-badges");
@@ -1447,23 +1480,22 @@ document.getElementById('withdraw-money-form')?.addEventListener('submit', (e) =
   withdrawMoney(amount);
 });
 
-document.getElementById("btn-view-all-badges")?.addEventListener("click", (e) => {
+document.getElementById('btn-view-all-badges')
+?.addEventListener('click', (e) => {
   e.preventDefault();
+  renderBadgesPopup();
+});
 
-  const all = document.getElementById("all-badges");
-  const preview = document.getElementById("badge-preview-row");
+document.getElementById('close-badges-popup')
+?.addEventListener('click', () => {
+  document.getElementById('badges-popup-overlay').style.display = 'none';
+});
 
-  if (!all || !preview) return;
+document.getElementById('badges-popup-overlay')
+?.addEventListener('click', (e) => {
 
-  const isHidden = getComputedStyle(all).display === "none";
-
-  if (isHidden) {
-    renderAllBadges();
-    all.style.display = "grid";
-    preview.style.display = "none";
-  } else {
-    all.style.display = "none";
-    preview.style.display = "flex";
+  if (e.target.id === 'badges-popup-overlay') {
+    document.getElementById('badges-popup-overlay').style.display = 'none';
   }
 });
 
