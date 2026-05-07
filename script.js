@@ -225,6 +225,27 @@ async function renderApp() {
   });
 }
 
+async function checkDailyLoginBonus() {
+  if (isDemo || !userProfile.id) return;
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const { data } = await supabase
+      .from('app_activities')
+      .select('id')
+      .eq('user_id', userProfile.id)
+      .eq('activity_name', 'Daily Login')
+      .gte('created_at', today.toISOString())
+      .limit(1);
+
+    if (!data || data.length === 0) {
+      await addXP(10, 'Daily Login');
+    }
+  } catch (err) {
+    console.error('Daily login bonus error:', err);
+  }
+}
+
 async function checkOnboardingAndRoute() {
   if (isDemo) return;
 
@@ -238,6 +259,7 @@ async function checkOnboardingAndRoute() {
     // age_range is NULL/empty until the onboarding form is submitted
     if (profile && profile.age_range) {
       routeTo('home');
+      await checkDailyLoginBonus();
     } else {
       showOnboarding();
     }
