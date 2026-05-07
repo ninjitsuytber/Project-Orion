@@ -2200,3 +2200,39 @@ select.auth-input {
     border: none;
   }
 }
+
+#loading-screen {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s ease;
+}
+
+#loading-screen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loading-logo {
+  width: 360px;
+  max-width: 78vw;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+  animation: loading-rise 0.7s ease both;
+}
+
+@keyframes loading-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1951,4 +1951,9 @@ document.getElementById('ai-chat-overlay')?.addEventListener('click', e => {
   if (e.target === e.currentTarget) closeChat();
 });
 
-renderApp();
+const minDelay = new Promise(resolve => setTimeout(resolve, 1500));
+Promise.all([renderApp(), minDelay]).then(() => {
+  const screen = document.getElementById('loading-screen');
+  screen.classList.add('fade-out');
+  screen.addEventListener('transitionend', () => screen.remove(), { once: true });
+});
