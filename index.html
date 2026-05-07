@@ -14,6 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
     rel="stylesheet" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0&icon_names=leaderboard" />
 </head>
 
 <body>
@@ -496,16 +497,28 @@
           </div>
 
           <div class="rw-grid">
-            <div class="rw-card">
-              <div class="rw-card-header">
-                <span class="rw-card-title">Badges</span>
-                <a href="#" id="btn-view-all-badges" class="rw-view-all">View all</a>
+            <div class="rw-left">
+              <div class="rw-card">
+                <div class="rw-card-header">
+                  <span class="rw-card-title">Badges</span>
+                  <a href="#" id="btn-view-all-badges" class="rw-view-all">View all</a>
+                </div>
+                <div id="badge-preview-row" class="rw-badges-row">
+                </div>
+                <div id="all-badges" style="display: none;"></div>
               </div>
-               <div id="badge-preview-row" class="rw-badges-row">
-              </div>
-              <div id="all-badges" style="display: none;"></div>
-            </div>
 
+              <div class="rw-card">
+                <div class="rw-card-header">
+                  <span class="rw-card-title">XP Rank</span>
+                </div>
+                <div id="rank-row" class="rw-badges-row">
+                  <span class="material-symbols-outlined" id="rank_icon">leaderboard</span>
+                  <p>I am <span id="rank">1 th</span> out of <span id="total_users">10</span> total users.</p>
+                </div>
+                <div id="all-badges" style="display: none;"></div>
+              </div>
+            </div>
             <div class="rw-missions-col">
               <div class="rw-mission-card">
                 <div class="rw-mission-icon">

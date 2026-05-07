@@ -12,6 +12,8 @@ const pageRewards = document.getElementById('page-rewards');
 const pageDiscover = document.getElementById('page-discover');
 const pageMe = document.getElementById('page-me');
 const spend = document.querySelector('.list-row list-row--clickable');
+const rank =  document.getElementById('rank');
+const total_users = document.getElementById('total_users');
 
 const navItems = {
   home: document.getElementById('nav-home'),
@@ -319,6 +321,41 @@ async function logActivity(activityName) {
   } catch (err) {
     console.error('logActivity error:', err);
   }
+}
+
+// Streak ranks
+async function rankCalc(){
+  
+  if (isDemo || !userProfile.id) return;
+  try{
+    const { data, error } = await supabase
+    .from('user_progress')
+    .select("xp");
+    console.log(data);
+    const xp_list=data.map(user => user.xp);
+    console.log(xp_list);
+    
+    let rank_count=0;
+    let sum=0;
+    xp_list.sort((a,b) => a-b)
+    for (let x in xp_list){
+      rank_count+=1;
+      sum+=1;
+      if (x==userProfile.xp){
+        break;
+      }
+    }
+    console.log(userProfile.xp);
+    console.log(xp_list);
+    console.log("Count"+(rank_count-1));
+    rank.innerText=(rank_count-1)+"th";
+    total_users.innerText=sum;
+
+  }
+  catch(err){
+    console.log(err);
+  }
+
 }
 
 // Modals
@@ -746,6 +783,7 @@ async function updateDashboard() {
   renderBadgePreview();
   renderAllBadges();
   fetchNotice();
+  rankCalc()
 }
 
 function updateRewardsUI() {

@@ -709,6 +709,30 @@ body {
   border-radius: 10px;
 }
 
+#rank-row{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+#rank_icon{
+  font-size: 25px;
+  color: #9633f8;
+  background-color: #a347ff2e;
+  border-radius:100%;
+  height:45px;
+  width:45px;
+  display:flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#rank{
+  color:gold;
+  font-weight: bold;
+  font-size: 30px;
+}
+
 .col-right {
   display: flex;
   flex-direction: column;
@@ -1620,6 +1644,12 @@ body {
   border: 1px solid var(--border-light);
   border-radius: 18px;
   padding: 1.4rem 1.6rem;
+}
+
+.rw-left{
+  display:flex;
+  flex-direction: column;
+  gap:15px;
 }
 
 .rw-card-header {
