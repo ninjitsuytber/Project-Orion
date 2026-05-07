@@ -21,8 +21,11 @@ app.add_middleware(
 )
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_MODEL = "gemini-3.1-flash-lite-preview"
+GEMINI_FALLBACK_MODEL = "gemini-2.5-flash"
 GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/openai"
+
+MODELS_TO_TRY = ["gemini-3.1-flash-lite-preview", "gemini-2.5-flash","gemini-2.0-flash","gemini-2.5-flash-lite","gemini-2.0-flash-lite"]
 
 SYSTEM_PROMPT = """\
 You are Orion, a financial assistant with an Asian Parent personality.
@@ -74,18 +77,38 @@ async def call_gemini(messages: list[dict], max_tokens: int = 200) -> str:
     logger.info("Calling Gemini: %s | model=%s | messages=%d", url, GEMINI_MODEL, len(messages))
 
     async with httpx.AsyncClient(timeout=25) as client:
-        resp = await client.post(url, headers=headers, json=payload)
-        logger.info("Gemini response status: %s", resp.status_code)
-        if resp.status_code != 200:
-            logger.error("Gemini error body: %s", resp.text)
-            resp.raise_for_status()
-        data = resp.json()
+        for model in MODELS_TO_TRY:
+            payload = {
+                "model": model,
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": 0.75,
+            }
+            
+            logger.info("Attempting Gemini API | model=%s | messages=%d", model, len(messages))
+            
+            try:
+                resp = await client.post(url, headers=headers, json=payload)
+                
+                # If successful, return the data immediately
+                if resp.status_code == 200:
+                    data = resp.json()
+                    logger.info("Success with model: %s", model)
+                    return data["choices"][0]["message"]["content"].strip()
+                else:
+                    # Log the specific error from this model, but don't crash yet
+                    logger.warning("Model %s failed with status %s: %s", model, resp.status_code, resp.text)
+            
+            except httpx.RequestError as e:
+                # Catch network errors (like timeouts)
+                logger.warning("Network error with model %s: %s", model, str(e))
+            except (KeyError, IndexError) as e:
+                # Catch unexpected JSON formatting
+                logger.warning("Unexpected response format from model %s: %s", model, str(e))
 
-    try:
-        return data["choices"][0]["message"]["content"].strip()
-    except (KeyError, IndexError) as e:
-        logger.error("Unexpected Gemini response format: %s", data)
-        raise ValueError(f"Unexpected response format: {e}") from e
+        # If the loop finishes and we are here, ALL models failed
+        logger.error("All fallback models exhausted. API request failed.")
+        raise RuntimeError("All Gemini models failed to respond correctly.")
 
 
 @app.get("/health")
