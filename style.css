@@ -992,17 +992,19 @@ body {
 .mini-bar-chart {
   display: flex;
   align-items: flex-end;
+  justify-content: space-between;
   gap: 10px;
   height: 80px;
   width: 100%;
 }
 
 .mini-bar-chart .bar {
-  flex: 1;
+  width: 25px;
   background: var(--accent-primary);
   opacity: 0.6;
   border-radius: 4px 4px 0 0;
-  transition: opacity 0.2s;
+  transition: height 0.3s ease, opacity 0.2s;
+  min-height: 2px;
 }
 
 .mini-bar-chart .bar:hover { opacity: 1; }
