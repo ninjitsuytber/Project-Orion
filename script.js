@@ -61,6 +61,25 @@ const BADGE_THEMES = [
   { tier: 10, color: '#e0f7ff', bg: 'rgba(224,247,255,0.22)' },  // Diamond
 ];
 
+function renderWeeklyTrend() {
+    const chartContainer = document.querySelector('.mini-bar-chart');
+    if (!chartContainer || !userProfile.weekly_history) return;
+
+    chartContainer.innerHTML = '';
+
+    const maxSpend = Math.max(...userProfile.weekly_history.map(d => d.total), 10); 
+
+    chartContainer.innerHTML = userProfile.weekly_history.map(day => {
+        const heightPct = day.total > 0 ? Math.max(5, (day.total / maxSpend) * 100) : 0;
+        return `
+            <div class="bar" 
+                 style="height: ${heightPct}%;" 
+                 title="${day.displayDate}: RM ${day.total.toFixed(2)}">
+            </div>
+        `;
+    }).join('');
+}
+
 //Tier Update
 function calculateTier(xp) {
   let tier = 1;
@@ -190,6 +209,7 @@ let userProfile = {
   age_range: '',
   monthly_income: 1000,
   savings_goal: 1,
+  weekly_history: 0,
   category_budgets: { housing: 0, food: 0, transport: 0, others: 0 },
   category_spent: { housing: 0, food: 0, transport: 0, others: 0 }
 };
@@ -345,12 +365,87 @@ async function syncUserData() {
     today.setHours(0, 0, 0, 0);
     const { data: todayTxs } = await supabase
       .from('transactions')
-      .select('amount, type')
+      .select('amount, type, description')
       .eq('user_id', userProfile.id)
       .gte('created_at', today.toISOString());
 
     userProfile.spent_today = todayTxs?.filter(tx => tx.type === 'send').reduce((sum, tx) => sum + Number(tx.amount), 0) || 0;
     userProfile.saved_today = todayTxs?.filter(tx => tx.type === 'save').reduce((sum, tx) => sum + Number(tx.amount), 0) || 0;
+
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const { data: monthTxs } = await supabase
+      .from('transactions')
+      .select('amount, type, category, description')
+      .eq('user_id', userProfile.id)
+      .gte('created_at', startOfMonth.toISOString());
+    
+    let dailySpentTotal = 0;
+    let categorySpentDaily = { housing: 0, food: 0, transport: 0, others: 0 };
+
+    if (todayTxs) {
+      todayTxs.forEach(tx => {
+        if (tx.type === 'send') {
+          const amt = Number(tx.amount) || 0;
+          dailySpentTotal += amt;
+
+          // Extract category from [bracket] tags in description
+          const rawDesc = tx.description || '';
+          const match = rawDesc.match(/^\[(.*?)\]/);
+          const cat = match ? match[1].toLowerCase() : 'others';
+          
+          if (['food', 'grocery'].includes(cat)) {
+            categorySpentDaily.food += amt;
+          } else if (['transport'].includes(cat)) {
+            categorySpentDaily.transport += amt;
+          } else if (['housing', 'telco', 'insurance'].includes(cat)) {
+            categorySpentDaily.housing += amt;
+          } else {
+            categorySpentDaily.others += amt; 
+          }
+        }
+      });
+    }
+
+    userProfile.spent_today = dailySpentTotal;
+    userProfile.category_spent = categorySpentDaily;
+
+    // --- Fetch Weekly Spending Data ---
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        last7Days.push({
+            date: localDate,
+            total: 0,
+            displayDate: d.toLocaleDateString([], { weekday: 'short' })
+        });
+    }
+
+    const startOf7Days = new Date();
+    startOf7Days.setDate(startOf7Days.getDate() - 6);
+    startOf7Days.setHours(0, 0, 0, 0);
+
+    const { data: weeklyTxs } = await supabase
+      .from('transactions')
+      .select('amount, created_at, type')
+      .eq('user_id', userProfile.id)
+      .eq('type', 'send')
+      .gte('created_at', startOf7Days.toISOString());
+
+    if (weeklyTxs) {
+        weeklyTxs.forEach(tx => {
+            // Parse transaction time to Local Date object, then to YYYY-MM-DD
+            const txObj = new Date(tx.created_at);
+            const txLocalDate = `${txObj.getFullYear()}-${String(txObj.getMonth() + 1).padStart(2, '0')}-${String(txObj.getDate()).padStart(2, '0')}`;
+            
+            const dayObj = last7Days.find(d => d.date === txLocalDate);
+            if (dayObj) {
+                dayObj.total += Number(tx.amount);
+            }
+        });
+    }
+    userProfile.weekly_history = last7Days;
 
     // 5. Fetch Transactions for Activity Log
     const { data: transactions } = await supabase
@@ -442,17 +537,37 @@ function renderAppActivities(activities) {
   }).join('');
 }
 
-function updateCategoriesUI() {
-  if (!userProfile.category_budgets) return;
+function updateDailySpendingsUI() {
+  const salary = userProfile.monthly_income || 0;
+  const savingsGoal = userProfile.savings_goal || (salary * 0.2); 
+  
+  // Calculate total monthly spending allowance, then divide by 30 days
+  const monthlyAllowance = salary - savingsGoal;
+  const globalDailyLimit = Math.max(0, monthlyAllowance / 30);
+  
+  // Calculate Ring Progress based on daily limit
+  const spentPercentage = globalDailyLimit > 0 
+    ? Math.min(100, (userProfile.spent_today / globalDailyLimit) * 100) 
+    : 0;
+
+  updateText('detail-spent-pct', `${Math.round(spentPercentage)}%`);
+  setRingProgress('detail-spending-ring-fill', 82, spentPercentage);
+
+  const dailyCatLimits = {
+    food: (salary * 0.20) / 30,
+    transport: (salary * 0.15) / 30,
+    housing: (salary * 0.30) / 30,
+    others: (salary * 0.15) / 30
+  };
 
   const cats = ['food', 'transport', 'housing', 'others'];
   cats.forEach(cat => {
-    const budget = userProfile.category_budgets[cat] || 0;
+    const limit = dailyCatLimits[cat] || 0;
     const spent = userProfile.category_spent[cat] || 0;
-    const left = Math.max(0, budget - spent);
+    const remaining = Math.max(0, limit - spent);
 
-    updateText(`cat-${cat}-left`, left.toFixed(2));
-    updateText(`cat-${cat}-total`, budget.toFixed(2));
+    updateText(`cat-${cat}-left`, remaining.toFixed(2));
+    updateText(`cat-${cat}-total`, limit.toFixed(2));
   });
 }
 
@@ -463,7 +578,8 @@ async function updateDashboard() {
   updateSpendingRing();
   updateSavingJar();
   updateRewardsUI();
-  updateCategoriesUI();
+  updateDailySpendingsUI();
+  renderWeeklyTrend();
   initActivityTabs();
 }
 
