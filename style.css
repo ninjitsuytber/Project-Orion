@@ -1049,7 +1049,10 @@ body {
   }
 
   .col-left, .col-main, .col-right {
-    display: contents;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 1.5rem;
   }
 
   /* Auto-align nested balance details on mobile */
@@ -1863,3 +1866,72 @@ select.auth-input {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+.set-daily-spending{
+  display:none;
+  position:fixed;
+  z-index:1;
+  width:50%;
+  height:50%;
+  background-color: #261A3C;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content: center;
+  gap:10%;
+  border-radius:10px;
+  top:50%;
+  left:50%;
+  transform:translate(-50%, -50%);
+}
+
+.daily-spending-input{
+  display:flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap:10%;
+}
+
+.set-daily-spending input{
+  background-color:#1A112A;
+  border: none;
+  color:#ffffff;
+  outline:none;
+  height:50px;
+  width:300px;
+  border-radius: 8px;
+  font-size: large;
+  font-style: #ffffff;
+  border-radius:8px;
+  margin-bottom:20px;
+
+}
+::placeholder{
+  color:#ffffff;
+  opacity:1;
+}
+input {
+  align-items: center;
+  align-content: center;
+  padding-left: 10%;
+}
+
+
+
+.daily-spending-enter{
+  background-color: #8A5CF5;
+  height:50px;
+  width:80px;
+  text-align:center;
+  color:#ffffff;
+  outline:none;
+  border:none;
+  border-radius:10px;
+  font-size:20px;
+}
+
+.display-spending-input button:hover{
+  cursor: pointer;
+}
+
