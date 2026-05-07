@@ -790,19 +790,12 @@ function updateRewardsUI() {
   updateText('rw-badge-name', currentBadge.name);
 
   // Sync Home Page Rewards Widget
-  const homeGiftBoxes = document.getElementById('home-gift-boxes');
-  if (homeGiftBoxes) {
-    const boxes = homeGiftBoxes.querySelectorAll('.gift-box');
-    boxes.forEach((box, index) => {
-      const label = box.querySelector('.gift-label');
-      if (index === 0) {
-        label.textContent = `${userProfile.streak} Day Streak`;
-      } else if (index === 1) {
-        label.textContent = currentBadge.name;
-      } else if (index === 2) {
-        label.textContent = `${userProfile.xp} Total XP`;
-      }
-    });
+  updateText('home-streak-val', `${userProfile.streak} Days`);
+  updateText('home-total-xp', `${userProfile.xp} XP`);
+  updateText('home-badge-name', currentBadge.name);
+  const homeBadgeImg = document.getElementById('home-badge-img');
+  if (homeBadgeImg && asset) {
+    homeBadgeImg.src = asset.color;
   }
   renderBadgePreview();
 }

@@ -417,33 +417,37 @@
                 <h3 class="widget-title" style="margin: 0;">Rewards & Missions</h3>
               </div>
 
-              <div class="gift-boxes" id="home-gift-boxes">
-                <div class="gift-box">
-                  <span class="gift-icon">🎁</span>
-                  <span class="gift-label">In progress</span>
-                </div>
-                <div class="gift-box">
-                  <span class="gift-icon">🎁</span>
-                  <span class="gift-label">In progress</span>
-                </div>
-                <div class="gift-box">
-                  <span class="gift-icon">🎁</span>
-                  <span class="gift-label">In progress</span>
-                </div>
-              </div>
-
-              <div class="rewards-list">
-                <div class="reward-card">
-                  <div class="reward-icon purple">
-                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
+              <div class="rw-stats-row">
+                <div class="rw-stat-item">
+                  <div class="rw-stat-icon accent-purple">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                      <polyline points="17 6 23 6 23 12"></polyline>
                     </svg>
                   </div>
-                  <div class="reward-info">
-                    <h4>Refer a friend</h4>
-                    <p>Refer & earn rewards up to 225 XP. Unlimited...</p>
-                    <span class="time-left">57 days left</span>
+                  <div class="rw-stat-body">
+                    <span class="rw-stat-value" id="home-streak-val">0 Days</span>
+                    <span class="rw-stat-label">Streak</span>
+                  </div>
+                </div>
+                <div class="rw-stat-divider"></div>
+                <div class="rw-stat-item">
+                  <img id="home-badge-img" src="assets/badges/b1.svg" alt="Current Badge" width="48" height="48" style="object-fit: contain;">
+                  <div class="rw-stat-body">
+                    <span class="rw-stat-value" id="home-badge-name">No Money No Talk</span>
+                    <span class="rw-stat-label">Badge</span>
+                  </div>
+                </div>
+                <div class="rw-stat-divider"></div>
+                <div class="rw-stat-item">
+                  <div class="rw-stat-icon accent-cyan">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                  </div>
+                  <div class="rw-stat-body">
+                    <span class="rw-stat-value" id="home-total-xp">0 XP</span>
+                    <span class="rw-stat-label">Total Score</span>
                   </div>
                 </div>
               </div>
