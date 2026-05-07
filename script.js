@@ -12,7 +12,7 @@ const pageRewards = document.getElementById('page-rewards');
 const pageDiscover = document.getElementById('page-discover');
 const pageMe = document.getElementById('page-me');
 const spend = document.querySelector('.list-row list-row--clickable');
-const rank =  document.getElementById('rank');
+const rank = document.getElementById('rank');
 const total_users = document.getElementById('total_users');
 
 const navItems = {
@@ -51,15 +51,15 @@ const BADGES = [
 ];
 
 const BADGE_THEMES = [
-  { tier: 1,  color: '#cd7f32', bg: 'rgba(205,127,50,0.18)'  },  // Bronze
-  { tier: 2,  color: '#a8a9ad', bg: 'rgba(168,169,173,0.18)' },  // Silver
-  { tier: 3,  color: '#ffd700', bg: 'rgba(255,215,0,0.15)'   },  // Gold
-  { tier: 4,  color: '#4f9eff', bg: 'rgba(79,158,255,0.18)'  },  // Sapphire
-  { tier: 5,  color: '#ff4d6d', bg: 'rgba(255,77,109,0.18)'  },  // Ruby
-  { tier: 6,  color: '#50c878', bg: 'rgba(80,200,120,0.18)'  },  // Emerald
-  { tier: 7,  color: '#c084fc', bg: 'rgba(192,132,252,0.18)' },  // Purple Crystal
-  { tier: 8,  color: '#f472b6', bg: 'rgba(244,114,182,0.18)' },  // Pink Crystal
-  { tier: 9,  color: '#94a3b8', bg: 'rgba(148,163,184,0.18)' },  // Gray Obsidian
+  { tier: 1, color: '#cd7f32', bg: 'rgba(205,127,50,0.18)' },  // Bronze
+  { tier: 2, color: '#a8a9ad', bg: 'rgba(168,169,173,0.18)' },  // Silver
+  { tier: 3, color: '#ffd700', bg: 'rgba(255,215,0,0.15)' },  // Gold
+  { tier: 4, color: '#4f9eff', bg: 'rgba(79,158,255,0.18)' },  // Sapphire
+  { tier: 5, color: '#ff4d6d', bg: 'rgba(255,77,109,0.18)' },  // Ruby
+  { tier: 6, color: '#50c878', bg: 'rgba(80,200,120,0.18)' },  // Emerald
+  { tier: 7, color: '#c084fc', bg: 'rgba(192,132,252,0.18)' },  // Purple Crystal
+  { tier: 8, color: '#f472b6', bg: 'rgba(244,114,182,0.18)' },  // Pink Crystal
+  { tier: 9, color: '#94a3b8', bg: 'rgba(148,163,184,0.18)' },  // Gray Obsidian
   { tier: 10, color: '#e0f7ff', bg: 'rgba(224,247,255,0.22)' },  // Diamond
 ];
 
@@ -130,23 +130,23 @@ function renderBadgePreview() {
   const currBadge = BADGES.find(b => b.tierRequired === currentTier);
   const nextBadge = BADGES.find(b => b.tierRequired === currentTier + 1);
 
-const preview = [prevBadge, currBadge, nextBadge].filter(Boolean);
+  const preview = [prevBadge, currBadge, nextBadge].filter(Boolean);
 
-preview.forEach(badge => {
+  preview.forEach(badge => {
 
-  const unlocked = calculateTier(userProfile.xp) >= badge.tierRequired;
+    const unlocked = calculateTier(userProfile.xp) >= badge.tierRequired;
 
-  const asset = BADGE_ASSETS[badge.id];
-  if (!asset) return;
-  const img = unlocked ? asset.color : asset.black;
+    const asset = BADGE_ASSETS[badge.id];
+    if (!asset) return;
+    const img = unlocked ? asset.color : asset.black;
 
-  container.innerHTML += `
+    container.innerHTML += `
     <div class="rw-badge-item">
       <img src="${img}" class="rw-badge-icon">
       <span class="rw-badge-label">${badge.name}</span>
     </div>
   `;
-});
+  });
 }
 
 function renderBadgesPopup() {
@@ -210,22 +210,22 @@ function renderAllBadges() {
 
 
 function renderWeeklyTrend() {
-    const chartContainer = document.querySelector('.mini-bar-chart');
-    if (!chartContainer || !userProfile.weekly_history) return;
+  const chartContainer = document.querySelector('.mini-bar-chart');
+  if (!chartContainer || !userProfile.weekly_history) return;
 
-    chartContainer.innerHTML = '';
+  chartContainer.innerHTML = '';
 
-    const maxSpend = Math.max(...userProfile.weekly_history.map(d => d.total), 10); 
+  const maxSpend = Math.max(...userProfile.weekly_history.map(d => d.total), 10);
 
-    chartContainer.innerHTML = userProfile.weekly_history.map(day => {
-        const heightPct = day.total > 0 ? Math.max(5, (day.total / maxSpend) * 100) : 0;
-        return `
+  chartContainer.innerHTML = userProfile.weekly_history.map(day => {
+    const heightPct = day.total > 0 ? Math.max(5, (day.total / maxSpend) * 100) : 0;
+    return `
             <div class="bar" 
                  style="height: ${heightPct}%;" 
                  title="${day.displayDate}: RM ${day.total.toFixed(2)}">
             </div>
         `;
-    }).join('');
+  }).join('');
 }
 
 //Tier Update
@@ -324,38 +324,25 @@ async function logActivity(activityName) {
 }
 
 // Streak ranks
-async function rankCalc(){
-  
+async function rankCalc() {
   if (isDemo || !userProfile.id) return;
-  try{
-    const { data, error } = await supabase
-    .from('user_progress')
-    .select("xp");
-    console.log(data);
-    const xp_list=data.map(user => user.xp);
-    console.log(xp_list);
-    
-    let rank_count=0;
-    let sum=0;
-    xp_list.sort((a,b) => a-b)
-    for (let x in xp_list){
-      rank_count+=1;
-      sum+=1;
-      if (x==userProfile.xp){
-        break;
-      }
-    }
-    console.log(userProfile.xp);
-    console.log(xp_list);
-    console.log("Count"+(rank_count-1));
-    rank.innerText=(rank_count-1)+"th";
-    total_users.innerText=sum;
+  try {
+    const { data, error } = await supabase.rpc('get_xp_rank');
+    if (error || !data || !data.success) return;
 
-  }
-  catch(err){
-    console.log(err);
-  }
+    const { total, beaten } = data;
+    const pct = total > 1 ? Math.round((beaten / (total - 1)) * 100) : 100;
+    const position = total - beaten;
 
+    const rankEl = document.getElementById('rank');
+    if (rankEl) rankEl.innerText = pct;
+    const posEl = document.getElementById('rank_position');
+    if (posEl) posEl.innerText = position;
+    const totalEl = document.getElementById('total_users');
+    if (totalEl) totalEl.innerText = total;
+  } catch (err) {
+    console.warn('[Orion] rankCalc error:', err);
+  }
 }
 
 // Modals
@@ -496,17 +483,17 @@ async function syncUserData() {
       const savedLimit = Number(profile.daily_spending_limit);
 
       if (savedLimit > 0) {
-          userProfile.daily_spending_limit = savedLimit;
+        userProfile.daily_spending_limit = savedLimit;
       } else if (userProfile.monthly_income > 0) {
-          userProfile.daily_spending_limit = Math.max(0, (userProfile.monthly_income - userProfile.savings_goal) / 30);
+        userProfile.daily_spending_limit = Math.max(0, (userProfile.monthly_income - userProfile.savings_goal) / 30);
       }
 
       const finalLimit = userProfile.daily_spending_limit;
       userProfile.category_budgets = {
-          food:      finalLimit * 0.35,
-          transport: finalLimit * 0.20,
-          grocery:   finalLimit * 0.25,
-          others:    finalLimit * 0.20
+        food: finalLimit * 0.35,
+        transport: finalLimit * 0.20,
+        grocery: finalLimit * 0.25,
+        others: finalLimit * 0.20
       };
     } else {
       // Create profile if doesn't exist
@@ -546,7 +533,7 @@ async function syncUserData() {
       .from('user_badges')
       .select('badge_id')
       .eq('user_id', userProfile.id);
-    
+
     userProfile.badges = badges?.map(b => b.badge_id) || ['b1'];
     if (!userProfile.badges.includes('b1')) {
       userProfile.badges.unshift('b1');
@@ -597,14 +584,14 @@ async function syncUserData() {
     // --- Fetch Weekly Spending Data ---
     const last7Days = [];
     for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        last7Days.push({
-            date: localDate,
-            total: 0,
-            displayDate: d.toLocaleDateString([], { weekday: 'short' })
-        });
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      last7Days.push({
+        date: localDate,
+        total: 0,
+        displayDate: d.toLocaleDateString([], { weekday: 'short' })
+      });
     }
 
     const startOf7Days = new Date();
@@ -619,16 +606,16 @@ async function syncUserData() {
       .gte('created_at', startOf7Days.toISOString());
 
     if (weeklyTxs) {
-        weeklyTxs.forEach(tx => {
-            // Parse transaction time to Local Date object, then to YYYY-MM-DD
-            const txObj = new Date(tx.created_at);
-            const txLocalDate = `${txObj.getFullYear()}-${String(txObj.getMonth() + 1).padStart(2, '0')}-${String(txObj.getDate()).padStart(2, '0')}`;
-            
-            const dayObj = last7Days.find(d => d.date === txLocalDate);
-            if (dayObj) {
-                dayObj.total += Number(tx.amount);
-            }
-        });
+      weeklyTxs.forEach(tx => {
+        // Parse transaction time to Local Date object, then to YYYY-MM-DD
+        const txObj = new Date(tx.created_at);
+        const txLocalDate = `${txObj.getFullYear()}-${String(txObj.getMonth() + 1).padStart(2, '0')}-${String(txObj.getDate()).padStart(2, '0')}`;
+
+        const dayObj = last7Days.find(d => d.date === txLocalDate);
+        if (dayObj) {
+          dayObj.total += Number(tx.amount);
+        }
+      });
     }
     userProfile.weekly_history = last7Days;
 
@@ -725,15 +712,15 @@ function renderAppActivities(activities) {
 
 function updateDailySpendingsUI() {
   const salary = userProfile.monthly_income || 0;
-  const savingsGoal = userProfile.savings_goal || (salary * 0.2); 
-  
+  const savingsGoal = userProfile.savings_goal || (salary * 0.2);
+
   // Calculate total monthly spending allowance, then divide by 30 days
   const monthlyAllowance = salary - savingsGoal;
   const globalDailyLimit = userProfile.daily_spending_limit || ((userProfile.monthly_income - userProfile.savings_goal) / 30);
-  
+
   // Calculate Ring Progress based on daily limit
-  const spentPercentage = globalDailyLimit > 0 
-    ? Math.min(100, (userProfile.spent_today / globalDailyLimit) * 100) 
+  const spentPercentage = globalDailyLimit > 0
+    ? Math.min(100, (userProfile.spent_today / globalDailyLimit) * 100)
     : 0;
 
   updateText('detail-spent-pct', `${Math.round(spentPercentage)}%`);
@@ -744,10 +731,10 @@ function updateDailySpendingsUI() {
 
 
   const dailyCatLimits = {
-    food:      globalDailyLimit * 0.35,
+    food: globalDailyLimit * 0.35,
     transport: globalDailyLimit * 0.20,
-    grocery:   globalDailyLimit * 0.25,
-    others:    globalDailyLimit * 0.20
+    grocery: globalDailyLimit * 0.25,
+    others: globalDailyLimit * 0.20
   };
 
   const ringRadii = {
@@ -790,9 +777,9 @@ function updateRewardsUI() {
   // Sync Rewards Page Stats
   updateText('rw-streak-val', `${userProfile.streak} Days`);
   updateText('rw-total-xp', `${userProfile.xp} XP`);
-  
+
   const currentBadge = BADGES.find(b => b.tierRequired === userProfile.tier)
-  || BADGES[0];
+    || BADGES[0];
 
   const asset = BADGE_ASSETS[currentBadge.id];
   const badgeImg = document.getElementById('rw-current-badge-img');
@@ -864,8 +851,8 @@ function updateSavingJar() {
   const targetLarge = document.querySelector('.jar-target-large');
   if (targetLarge) targetLarge.textContent = `Goal: RM ${userProfile.savings_goal}`;
 
-  updateText('jar-pct',`${Math.round(percentage)}%`);
-  updateText('detail-jar-pct',`${Math.round(percentage)}%`);
+  updateText('jar-pct', `${Math.round(percentage)}%`);
+  updateText('detail-jar-pct', `${Math.round(percentage)}%`);
 
   const jarImg = document.getElementById('saving-jar-img');
   if (jarImg) jarImg.src = jarSrc;
@@ -1166,15 +1153,15 @@ async function updateSavingGoal(newGoal) {
 
   const { error } = await supabase
     .from('profiles')
-    .update({savings_goal: newGoal})
+    .update({ savings_goal: newGoal })
     .eq('id', userProfile.id);
-  
+
   if (!error) {
     userProfile.savings_goal = newGoal;
     updateDashboard();
     alert('Goal updated successfully!');
   } else {
-    console.error('Error updating goal:',error.message)
+    console.error('Error updating goal:', error.message)
   }
 }
 
@@ -1275,160 +1262,160 @@ function stopWaveAnimation() {
 }
 
 function initWaveAnimation(selector) {
-    if (_waveAnimId !== null) return;
+  if (_waveAnimId !== null) return;
 
-    const container = document.querySelector(selector);
-    if (!container) return;
+  const container = document.querySelector(selector);
+  if (!container) return;
 
-    let canvas = container.querySelector('canvas');
-    if (!canvas) {
-        canvas = document.createElement('canvas');
-        container.appendChild(canvas);
-    }
+  let canvas = container.querySelector('canvas');
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    container.appendChild(canvas);
+  }
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight;
+  const ctx = canvas.getContext('2d');
+
+  const monthlyBudget = userProfile.monthly_income - userProfile.savings_goal;
+  const dailyLimit = monthlyBudget / 30;
+  const remainingToday = dailyLimit - userProfile.spent_today;
+  const spentPercentage = Math.min(100, (userProfile.spent_today / dailyLimit) * 100);
+  if (spentPercentage > 100) {
+    spentPercentage = 100;
+  }
+  else if (spentPercentage < 0) {
+    spentPercentage = 0;
+  }
+  var verticalBaseline = canvas.height * (spentPercentage / 100);
+
+
+  console.log("monthly income:" + userProfile.monthly_income);
+  console.log("saving goals:" + userProfile.savings_goal);
+  console.log("monthlyBudget:" + monthlyBudget);
+  console.log("dailyLimit" + dailyLimit);
+  console.log("spent_today" + userProfile.spent_today);
+
+  console.log('remainingToday' + ((userProfile.spent_today / dailyLimit) * 100));
+  console.log('canvas height:' + canvas.height);
+  console.log('verticalBaseline' + verticalBaseline);
+  let color = "#ffffff";
+
+
+  if (spentPercentage >= 67 && spentPercentage <= 100) {
+    color = '#ff9292'
+  }
+  else if (spentPercentage >= 33 && spentPercentage <= 66) {
+    color = '#fdf111'
+  }
+  else {
+    color = '#43f6ff'
+  };
+
+  const params = {
+    AMPLITUDE_WAVES: 5,
+    AMPLITUDE_MIDDLE: 5,
+    AMPLITUDE_SIDES: 15,
+    OFFSET_SPEED: 100,
+    SPEED: 10,
+    OFFSET_WAVES: 60,
+    NUMBER_WAVES: 3,
+    COLOR: color,
+    NUMBER_CURVES: 4,
+    OFFSET_CURVE: true
+  };
+
+
+  const wavesOpacities = [0.3, 0.2, 0.1];
+  let speedInc = 0;
+  let gradient;
+
+  const hexToRgb = (hex) => {
+    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  };
+
+  const resize = () => {
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
-    const ctx = canvas.getContext('2d');
 
-    const monthlyBudget = userProfile.monthly_income - userProfile.savings_goal;
-    const dailyLimit = monthlyBudget / 30;
-    const remainingToday = dailyLimit - userProfile.spent_today;
-    const spentPercentage = Math.min(100, (userProfile.spent_today / dailyLimit) * 100);
-    if (spentPercentage>100){
-      spentPercentage=100;
+    let rgb = hexToRgb(params.COLOR);
+    gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
+    gradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3)`);
+  };
+
+  const render = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+
+
+
+    for (let j = params.NUMBER_WAVES - 1; j >= 0; j--) {
+      let offset = speedInc + j * Math.PI * params.OFFSET_WAVES;
+
+      ctx.fillStyle = (j === 0) ? gradient : params.COLOR;
+      ctx.globalAlpha = wavesOpacities[j];
+
+      let leftRange = verticalBaseline;
+      let rightRange = verticalBaseline;
+
+      let leftCurveRange = verticalBaseline - (Math.sin((offset / params.OFFSET_SPEED) + 1.5) * params.AMPLITUDE_WAVES);
+      let rightCurveRange = verticalBaseline - (Math.cos((offset / params.OFFSET_SPEED) + 0.5) * params.AMPLITUDE_WAVES);
+      let endCurveRange = verticalBaseline + (Math.sin((offset / (params.OFFSET_SPEED * 1.5))) * params.AMPLITUDE_MIDDLE);
+
+      let reverseLeftCurveRange = endCurveRange - rightCurveRange + endCurveRange;
+      let reverseRightCurveRange = endCurveRange - leftCurveRange + endCurveRange;
+
+      if (!params.OFFSET_CURVE) {
+        leftCurveRange = rightCurveRange;
+        reverseRightCurveRange = reverseLeftCurveRange;
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(0, leftRange);
+
+      ctx.bezierCurveTo(
+        canvas.width / (params.NUMBER_CURVES * 3), leftCurveRange,
+        canvas.width / (params.NUMBER_CURVES * 3 / 2), rightCurveRange,
+        canvas.width / params.NUMBER_CURVES, endCurveRange
+      );
+
+      for (let i = 1; i < params.NUMBER_CURVES; i++) {
+        const finalRightCurveRange = i % 2 !== 0 ? rightCurveRange : reverseRightCurveRange;
+        const finalLeftCurveRange = i % 2 !== 0 ? leftCurveRange : reverseLeftCurveRange;
+
+        const secondPtX = canvas.width * (i / params.NUMBER_CURVES) + canvas.width / (params.NUMBER_CURVES * 3);
+        const secondPtY = endCurveRange - finalRightCurveRange + endCurveRange;
+        const thirdPtX = canvas.width * (i / params.NUMBER_CURVES) + canvas.width * (2 / (params.NUMBER_CURVES * 3));
+        const thirdPtY = endCurveRange - finalLeftCurveRange + endCurveRange;
+        const lastPtX = canvas.width * ((i + 1) / params.NUMBER_CURVES);
+        const lastPtY = i === params.NUMBER_CURVES - 1 ? rightRange : endCurveRange;
+
+        ctx.bezierCurveTo(secondPtX, secondPtY, thirdPtX, thirdPtY, lastPtX, lastPtY);
+      }
+
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.lineTo(0, canvas.height);
+      ctx.lineTo(0, rightRange);
+      ctx.closePath();
+      ctx.fill();
     }
-    else if (spentPercentage<0){
-      spentPercentage=0;
-    }
-    var verticalBaseline = canvas.height * (spentPercentage/100); 
 
-
-    console.log("monthly income:"+userProfile.monthly_income);
-    console.log("saving goals:"+userProfile.savings_goal);
-    console.log("monthlyBudget:"+monthlyBudget);
-    console.log("dailyLimit"+ dailyLimit);
-    console.log("spent_today"+userProfile.spent_today);
-    
-    console.log('remainingToday'+((userProfile.spent_today / dailyLimit) * 100));
-    console.log('canvas height:'+canvas.height);
-    console.log('verticalBaseline'+verticalBaseline);
-    let color="#ffffff";
-
-
-    if (spentPercentage>=67 && spentPercentage<=100){
-      color='#ff9292'
-    }
-    else if (spentPercentage>=33 && spentPercentage<=66){
-      color='#fdf111'
-    }
-    else{
-      color='#43f6ff'
-    };
-
-    const params = {
-        AMPLITUDE_WAVES: 5,
-        AMPLITUDE_MIDDLE: 5,
-        AMPLITUDE_SIDES: 15,
-        OFFSET_SPEED: 100,
-        SPEED: 10,
-        OFFSET_WAVES: 60,
-        NUMBER_WAVES: 3,
-        COLOR: color,
-        NUMBER_CURVES: 4,
-        OFFSET_CURVE: true
-    };
-
-
-    const wavesOpacities = [0.3, 0.2, 0.1]; 
-    let speedInc = 0;
-    let gradient;
-
-    const hexToRgb = (hex) => {
-        let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? {
-            r: parseInt(result[1], 16),
-            g: parseInt(result[2], 16),
-            b: parseInt(result[3], 16)
-        } : null;
-    };
-
-    const resize = () => {
-        canvas.width = container.clientWidth;
-        canvas.height = container.clientHeight;
-        
-        let rgb = hexToRgb(params.COLOR);
-        gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
-        gradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3)`);
-    };
-
-    const render = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-
-
-
-        for (let j = params.NUMBER_WAVES - 1; j >= 0; j--) {
-            let offset = speedInc + j * Math.PI * params.OFFSET_WAVES;
-
-            ctx.fillStyle = (j === 0) ? gradient : params.COLOR;
-            ctx.globalAlpha = wavesOpacities[j];
-
-            let leftRange = verticalBaseline;
-            let rightRange = verticalBaseline;
-            
-            let leftCurveRange = verticalBaseline - (Math.sin((offset / params.OFFSET_SPEED) + 1.5) * params.AMPLITUDE_WAVES);
-            let rightCurveRange = verticalBaseline - (Math.cos((offset / params.OFFSET_SPEED) + 0.5) * params.AMPLITUDE_WAVES);
-            let endCurveRange = verticalBaseline + (Math.sin((offset / (params.OFFSET_SPEED * 1.5))) * params.AMPLITUDE_MIDDLE);
-
-            let reverseLeftCurveRange = endCurveRange - rightCurveRange + endCurveRange;
-            let reverseRightCurveRange = endCurveRange - leftCurveRange + endCurveRange;
-
-            if (!params.OFFSET_CURVE) {
-                leftCurveRange = rightCurveRange;
-                reverseRightCurveRange = reverseLeftCurveRange;
-            }
-
-            ctx.beginPath();
-            ctx.moveTo(0, leftRange);
-
-            ctx.bezierCurveTo(
-                canvas.width / (params.NUMBER_CURVES * 3), leftCurveRange, 
-                canvas.width / (params.NUMBER_CURVES * 3 / 2), rightCurveRange, 
-                canvas.width / params.NUMBER_CURVES, endCurveRange
-            );
-
-            for (let i = 1; i < params.NUMBER_CURVES; i++) {
-                const finalRightCurveRange = i % 2 !== 0 ? rightCurveRange : reverseRightCurveRange;
-                const finalLeftCurveRange = i % 2 !== 0 ? leftCurveRange : reverseLeftCurveRange;
-
-                const secondPtX = canvas.width * (i / params.NUMBER_CURVES) + canvas.width / (params.NUMBER_CURVES * 3);
-                const secondPtY = endCurveRange - finalRightCurveRange + endCurveRange;
-                const thirdPtX = canvas.width * (i / params.NUMBER_CURVES) + canvas.width * (2 / (params.NUMBER_CURVES * 3));
-                const thirdPtY = endCurveRange - finalLeftCurveRange + endCurveRange;
-                const lastPtX = canvas.width * ((i + 1) / params.NUMBER_CURVES);
-                const lastPtY = i === params.NUMBER_CURVES - 1 ? rightRange : endCurveRange;
-                
-                ctx.bezierCurveTo(secondPtX, secondPtY, thirdPtX, thirdPtY, lastPtX, lastPtY);
-            }
-
-            ctx.lineTo(canvas.width, canvas.height);
-            ctx.lineTo(0, canvas.height);
-            ctx.lineTo(0, rightRange);
-            ctx.closePath();
-            ctx.fill();
-        }
-
-        speedInc += params.SPEED;
-        _waveAnimId = requestAnimationFrame(render);
-    };
-
-    /*Height of the wave*/
-    /*const waveHeight=document.querySelector('.wave-canvas');
-    waveHeight.style.setProperty('--height', spentPercentage);*/
-
-    window.addEventListener('resize', resize);
-    resize();
+    speedInc += params.SPEED;
     _waveAnimId = requestAnimationFrame(render);
+  };
+
+  /*Height of the wave*/
+  /*const waveHeight=document.querySelector('.wave-canvas');
+  waveHeight.style.setProperty('--height', spentPercentage);*/
+
+  window.addEventListener('resize', resize);
+  resize();
+  _waveAnimId = requestAnimationFrame(render);
 }
 
 // Navigation Listeners
@@ -1560,23 +1547,23 @@ document.getElementById('withdraw-money-form')?.addEventListener('submit', (e) =
 });
 
 document.getElementById('btn-view-all-badges')
-?.addEventListener('click', (e) => {
-  e.preventDefault();
-  renderBadgesPopup();
-});
+  ?.addEventListener('click', (e) => {
+    e.preventDefault();
+    renderBadgesPopup();
+  });
 
 document.getElementById('close-badges-popup')
-?.addEventListener('click', () => {
-  document.getElementById('badges-popup-overlay').style.display = 'none';
-});
+  ?.addEventListener('click', () => {
+    document.getElementById('badges-popup-overlay').style.display = 'none';
+  });
 
 document.getElementById('badges-popup-overlay')
-?.addEventListener('click', (e) => {
+  ?.addEventListener('click', (e) => {
 
-  if (e.target.id === 'badges-popup-overlay') {
-    document.getElementById('badges-popup-overlay').style.display = 'none';
-  }
-});
+    if (e.target.id === 'badges-popup-overlay') {
+      document.getElementById('badges-popup-overlay').style.display = 'none';
+    }
+  });
 
 
 document.getElementById('btn-add-money')?.addEventListener('click', () => openModal('add'));
@@ -1615,12 +1602,12 @@ document.getElementById('balance-toggle-btn')?.addEventListener('click', () => {
   updateBalanceUI();
 });
 
-document.getElementById('btn-open-goal-modal')?.addEventListener('click',() => {
+document.getElementById('btn-open-goal-modal')?.addEventListener('click', () => {
   document.getElementById('input-savings-goal').value = userProfile.savings_goal;
   openModal('goal');
 });
 
-document.getElementById('edit-goal-form')?.addEventListener('submit', async(e) => {
+document.getElementById('edit-goal-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const newGoal = parseFloat(document.getElementById('input-savings-goal').value);
 
@@ -1650,18 +1637,18 @@ document.getElementById('onboarding-form')?.addEventListener('submit', async (e)
   userProfile.monthly_income = salaryVal;
   userProfile.savings_goal = savingsTarget;
   userProfile.category_budgets = {
-    food:      dailyLimit * 0.35,
+    food: dailyLimit * 0.35,
     transport: dailyLimit * 0.20,
-    grocery:   dailyLimit * 0.25,
-    others:    dailyLimit * 0.20
+    grocery: dailyLimit * 0.25,
+    others: dailyLimit * 0.20
   };
 
   const spent = userProfile.spent_today || 0;
   userProfile.category_spent = {
-    food:      spent * 0.5,
+    food: spent * 0.5,
     transport: spent * 0.3,
-    grocery:   0,
-    others:    spent * 0.2
+    grocery: 0,
+    others: spent * 0.2
   };
 
   if (isDemo) {
@@ -1718,10 +1705,10 @@ document.getElementById('update-financials-form')?.addEventListener('submit', as
   userProfile.savings_goal = savingsTarget;
   userProfile.daily_spending_limit = newDefaultDailyLimit;
   userProfile.category_budgets = {
-    food:      newDefaultDailyLimit * 0.35,
+    food: newDefaultDailyLimit * 0.35,
     transport: newDefaultDailyLimit * 0.20,
-    grocery:   newDefaultDailyLimit * 0.25,
-    others:    newDefaultDailyLimit * 0.20
+    grocery: newDefaultDailyLimit * 0.25,
+    others: newDefaultDailyLimit * 0.20
   };
 
   if (!isDemo && userProfile.id) {
@@ -1745,12 +1732,12 @@ document.getElementById('update-financials-form')?.addEventListener('submit', as
 
 document.querySelector('.list-row--clickable[id="btn-spending-limit-trigger"]')?.addEventListener('click', () => {
   const currentLimit = userProfile.daily_spending_limit || ((userProfile.monthly_income - userProfile.savings_goal) / 30);
-  
+
   const inputEl = document.getElementById('input-daily-limit');
   if (inputEl) {
     inputEl.value = currentLimit > 0 ? currentLimit.toFixed(2) : "";
   }
-  
+
   openModal('limit');
 });
 
@@ -1764,12 +1751,12 @@ document.getElementById('spending-limit-form')?.addEventListener('submit', async
   }
 
   userProfile.daily_spending_limit = newLimit;
-  
+
   userProfile.category_budgets = {
-    food:      newLimit * 0.35,
+    food: newLimit * 0.35,
     transport: newLimit * 0.20,
-    grocery:   newLimit * 0.25,
-    others:    newLimit * 0.20
+    grocery: newLimit * 0.25,
+    others: newLimit * 0.20
   };
 
   if (!isDemo && userProfile.id) {
@@ -1802,6 +1789,9 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
 async function fetchNotice() {
   if (!BACKEND_URL || !userProfile.id) return;
 
+  const star = document.getElementById('notice-bar-star');
+  if (star) star.classList.add('loading');
+
   const recentTx = (userProfile.transactions || []).slice(0, 5)
     .filter(t => ['send', 'save', 'withdraw', 'add'].includes(t.type))
     .map(t => {
@@ -1823,6 +1813,8 @@ async function fetchNotice() {
   if (userProfile.streak > 0) parts.push(`Saving streak: ${userProfile.streak} days`);
   const activity = parts.join('. ') || 'no recent activity';
 
+  const totalSpentToday = Object.values(cs).reduce((a, b) => a + b, 0);
+
   try {
     const res = await fetch(`${BACKEND_URL}/notice`, {
       method: 'POST',
@@ -1830,7 +1822,11 @@ async function fetchNotice() {
       body: JSON.stringify({
         recent_activity: activity,
         daily_limit: userProfile.daily_spending_limit || 0,
-        total_spent_today: Object.values(cs).reduce((a, b) => a + b, 0),
+        total_spent_today: totalSpentToday,
+        balance: userProfile.balance || 0,
+        saving_balance: userProfile.saving_balance || 0,
+        streak: userProfile.streak || 0,
+        username: userProfile.name || userProfile.username || '',
       }),
     });
     if (!res.ok) {
@@ -1841,6 +1837,8 @@ async function fetchNotice() {
     if (data.notice) updateText('notice-bar-text', data.notice);
   } catch (err) {
     console.warn('[Orion AI] notice error:', err);
+  } finally {
+    if (star) star.classList.remove('loading');
   }
 }
 
@@ -1860,11 +1858,17 @@ function buildChatContext() {
 
 const _chatHistory = [];
 
+let _chatGreeted = false;
+
 function openChat() {
   const overlay = document.getElementById('ai-chat-overlay');
   if (overlay) {
     overlay.style.display = 'flex';
     _chatContext = buildChatContext();
+    if (!_chatGreeted) {
+      appendChatMessage('ai', 'Owh Hello, you finally opened me liao! Ask me everything about your spending lah!');
+      _chatGreeted = true;
+    }
     document.getElementById('ai-chat-input')?.focus();
   }
 }
@@ -1903,6 +1907,15 @@ async function sendChatMessage() {
     return;
   }
 
+  const container = document.getElementById('ai-chat-messages');
+  const typingBubble = document.createElement('div');
+  typingBubble.className = 'ai-chat-typing';
+  typingBubble.innerHTML = '<span>✦</span>';
+  if (container) {
+    container.appendChild(typingBubble);
+    container.scrollTop = container.scrollHeight;
+  }
+
   try {
     const res = await fetch(`${BACKEND_URL}/chat`, {
       method: 'POST',
@@ -1912,7 +1925,7 @@ async function sendChatMessage() {
     if (!res.ok) {
       const errText = await res.text();
       console.warn('[Orion AI] chat error:', res.status, errText);
-      appendChatMessage('ai', 'Aiyah, something went wrong on my end. Try again lah!');
+      appendChatMessage('ai', 'Owh Halo, you finally opened me! Ask me anything about your spending lah!');
     } else {
       const data = await res.json();
       const reply = data.reply || 'Hmm, cannot think right now. Try again lah!';
@@ -1923,6 +1936,7 @@ async function sendChatMessage() {
     console.warn('[Orion AI] chat fetch error:', err);
     appendChatMessage('ai', 'Cannot reach the server lah! Make sure backend is running.');
   } finally {
+    typingBubble.remove();
     if (sendBtn) sendBtn.disabled = false;
   }
 }

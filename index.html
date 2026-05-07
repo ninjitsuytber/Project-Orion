@@ -19,7 +19,6 @@
 
 <body>
   <div id="app">
-    <!-- Auth Views -->
     <div id="login-view" class="auth-container" style="display: none;">
       <div class="auth-box">
         <h2>Welcome Back</h2>
@@ -55,7 +54,6 @@
       </div>
     </div>
 
-    <!-- Onboarding Guide View -->
     <div id="onboarding-view" class="auth-container" style="display: none;">
       <div class="auth-box">
         <h2>Welcome to Orion!</h2>
@@ -77,7 +75,6 @@
       </div>
     </div>
 
-    <!-- Main App View -->
     <div id="main-view" style="display: none;">
       <nav class="top-nav" id="top-nav">
         <div class="brand" id="nav-brand" style="cursor: pointer;">
@@ -147,10 +144,9 @@
         </div>
       </nav>
 
-      <!-- Pages -->
       <div id="page-home" class="page-container" style="display: none;">
         <div class="notice-bar" id="notice-bar" style="cursor:pointer;">
-          <span style="font-size: 1rem; line-height: 1;">✦</span>
+          <span id="notice-bar-star" style="font-size: 1rem; line-height: 1; display:inline-block;">✦</span>
           <span id="notice-bar-text">Checking your spending habits...</span>
         </div>
 
@@ -220,7 +216,7 @@
               </div>
             </div>
 
-            <div class="widget mo-3">
+            <div class="widget mo-5">
               <div class="widget-header-tabs">
                 <h3 class="widget-title">Recent Activity</h3>
                 <div class="activity-tabs">
@@ -378,7 +374,7 @@
               </div>
             </div>
 
-            <div class="widget mo-5" id="discover-widget">
+            <div class="widget mo-3" id="discover-widget">
               <h3 class="widget-title" style="margin-bottom: 1.5rem;">Discover</h3>
               <div class="discover-section">
                 <h4>Learn</h4>
@@ -514,21 +510,16 @@
                 </div>
                 <div id="rank-row" class="rw-badges-row">
                   <span class="material-symbols-outlined" id="rank_icon">leaderboard</span>
-                  <p>I am <span id="rank">1 th</span> out of <span id="total_users">10</span> total users.</p>
+                  <div>
+                    <p style="margin:0 0 4px;">You're ahead of <span id="rank">—</span>% of all users.</p>
+                    <p style="margin:0; font-size:0.85rem; color:var(--text-secondary);">Rank <span id="rank_position" style="color:#fff; font-weight:600;">—</span> out of <span id="total_users" style="color:#fff; font-weight:600;">—</span> users</p>
+                  </div>
                 </div>
                 <div id="all-badges" style="display: none;"></div>
               </div>
             </div>
             <div class="rw-missions-col">
               <div class="rw-mission-card">
-                <div class="rw-mission-icon">
-                  <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                  </svg>
-                </div>
                 <div class="rw-mission-icon">
                   <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -618,7 +609,6 @@
           </div>
 
           <div class="financial-details-grid">
-            <!-- Spending Detail -->
             <div class="detail-card">
               <h2 class="section-heading">Detailed Daily Spendings</h2>
               <div class="spending-analysis">
@@ -678,7 +668,6 @@
               </div>
             </div>
 
-            <!-- Savings Detail -->
             <div class="detail-card">
               <h2 class="section-heading">Savings Progress</h2>
               <div class="jar-visual-container large">
@@ -861,9 +850,7 @@
     </div>
   </div>
 
-  <!-- Modals -->
   <div id="modal-container" class="modal-overlay" style="display: none;">
-    <!-- Add Money Modal -->
     <div id="modal-add-money" class="modal-content auth-box" style="display: none;">
       <h2>Add Money</h2>
       <form id="add-money-form" class="auth-form">
@@ -890,7 +877,6 @@
       </form>
     </div>
 
-    <!-- Send Money Modal -->
     <div id="modal-send-money" class="modal-content auth-box" style="display: none;">
       <h2>Send Money</h2>
       <form id="send-money-form" class="auth-form">
@@ -915,7 +901,6 @@
       <div id="send-money-error" class="error-msg"></div>
     </div>
 
-    <!-- Save Money Modal -->
     <div id="modal-save-money" class="modal-content auth-box" style="display: none;">
       <h2>Save to Jar</h2>
       <form id="save-money-form" class="auth-form">
@@ -1098,7 +1083,6 @@
         <button id="ai-chat-close" class="ai-chat-close" aria-label="Close chat">✕</button>
       </div>
       <div id="ai-chat-messages" class="ai-chat-messages">
-        <div class="ai-chat-bubble ai">Aiyah, you finally opened me! Ask me anything about your spending lah.</div>
       </div>
       <div class="ai-chat-input-row">
         <input id="ai-chat-input" class="ai-chat-input" type="text" placeholder="Ask Orion AI..." maxlength="300" />

@@ -28,17 +28,31 @@ GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/openai"
 MODELS_TO_TRY = ["gemini-3.1-flash-lite-preview", "gemini-2.5-flash","gemini-2.0-flash","gemini-2.5-flash-lite","gemini-2.0-flash-lite"]
 
 SYSTEM_PROMPT = """\
-You are Orion, a financial assistant with an Asian Parent personality.
-You care deeply about the user's financial wellbeing — like a strict but loving parent who hates wasteful spending.
+You are Orion, a Malaysian financial assistant with an Asian Parent personality.
+You care deeply about the user's financial wellbeing — like a strict but loving Malaysian parent who hates wasteful spending.
 You are direct, occasionally naggy, but always warm and want the best for the user.
 You teach and guide the user toward positive financial habits without being harsh or discouraging.
 Speak naturally and conversationally. Keep responses concise (2-4 sentences max).
-Use simple English. You may occasionally add "lah", "aiyah", or "wah" for character, but don't overdo it."""
+Use simple Malaysian English. Sprinkle these Malaysian words naturally into your responses to sound local and relatable:
+- "lah" to emphasize or soften (e.g. "Cannot like that lah!")
+- "boleh" for "can/able to" (e.g. "Boleh save more one!")
+- "meh" for skepticism or surprise (e.g. "So expensive one meh?")
+- "liao" for "already" (e.g. "Spent liao ah?")
+- "alamak" for shock or dismay (e.g. "Alamak, so much debt!")
+- "walao" for intense surprise or frustration (e.g. "Walao, this price!")
+- "aiyoh" or "aiya" for mild frustration (e.g. "Aiyoh, why spend so much?")
+- "syok" for something enjoyable or great (e.g. "Saving money is so syok!")
+- "cincai" for being too casual or careless (e.g. "Cannot be cincai with money!")
+- "kantoi" for getting caught doing something wrong (e.g. "Kantoi overspending again!")
+- "kacau" for disrupting or bothering (e.g. "Don't let bad habits kacau your savings!")
+Use these naturally — not every sentence needs one. Stay warm, encouraging, and very Malaysian lah!"""
 
 NOTICE_SYSTEM_PROMPT = """\
-You are an Asian Parent financial assistant for a money app.
-Based on the user's recent financial activity, write ONE short sentence (max 12 words) as a nudge or comment.
-Be like a concerned Asian parent — direct, slightly naggy, but warm and caring.
+You are Orion, a Malaysian Asian Parent financial assistant for a money app.
+Based on the user's financial snapshot, write ONE short personalised sentence (max 14 words) as a nudge or comment.
+Address the user by name if provided. React to their specific situation — low balance, high spending, good streak, savings, etc.
+Be like a concerned Malaysian parent — direct, slightly naggy, but warm and caring.
+Naturally use Malaysian expressions like: lah, meh, alamak, aiyoh, walao, boleh, liao, syok, cincai, kantoi.
 No emojis. No quotation marks. Output only the sentence, nothing else."""
 
 
@@ -46,6 +60,10 @@ class NoticeRequest(BaseModel):
     recent_activity: str
     daily_limit: float = 0
     total_spent_today: float = 0
+    balance: float = 0
+    saving_balance: float = 0
+    streak: int = 0
+    username: str = ""
 
 
 class ChatMessage(BaseModel):
@@ -84,29 +102,24 @@ async def call_gemini(messages: list[dict], max_tokens: int = 200) -> str:
                 "max_tokens": max_tokens,
                 "temperature": 0.75,
             }
-            
+
             logger.info("Attempting Gemini API | model=%s | messages=%d", model, len(messages))
-            
+
             try:
                 resp = await client.post(url, headers=headers, json=payload)
-                
-                # If successful, return the data immediately
+
                 if resp.status_code == 200:
                     data = resp.json()
                     logger.info("Success with model: %s", model)
                     return data["choices"][0]["message"]["content"].strip()
                 else:
-                    # Log the specific error from this model, but don't crash yet
                     logger.warning("Model %s failed with status %s: %s", model, resp.status_code, resp.text)
-            
+
             except httpx.RequestError as e:
-                # Catch network errors (like timeouts)
                 logger.warning("Network error with model %s: %s", model, str(e))
             except (KeyError, IndexError) as e:
-                # Catch unexpected JSON formatting
                 logger.warning("Unexpected response format from model %s: %s", model, str(e))
 
-        # If the loop finishes and we are here, ALL models failed
         logger.error("All fallback models exhausted. API request failed.")
         raise RuntimeError("All Gemini models failed to respond correctly.")
 
@@ -118,10 +131,15 @@ def health():
 
 @app.post("/notice")
 async def get_notice(req: NoticeRequest):
+    name_part = f"User's name: {req.username}. " if req.username else ""
     user_msg = (
-        f"User financial activity: {req.recent_activity}. "
-        f"Daily spending limit: RM {req.daily_limit:.2f}. "
-        f"Total spent today: RM {req.total_spent_today:.2f}."
+        f"{name_part}"
+        f"Balance: RM {req.balance:.2f}. "
+        f"Savings jar: RM {req.saving_balance:.2f}. "
+        f"Daily limit: RM {req.daily_limit:.2f}. "
+        f"Spent today: RM {req.total_spent_today:.2f}. "
+        f"Saving streak: {req.streak} days. "
+        f"Recent activity: {req.recent_activity}."
     )
     messages = [
         {"role": "system", "content": NOTICE_SYSTEM_PROMPT},
