@@ -931,35 +931,68 @@ body {
 .progress-ring-v2.large .ring-bg,
 .progress-ring-v2.large .ring-fill {
   stroke-width: 12;
-  r: 82;
-  cx: 90;
-  cy: 90;
-}
-
-.progress-ring-v2.large .ring-fill {
-  stroke-dasharray: 515.2; /* 2 * PI * 82 */
-  stroke-dashoffset: 515.2;
 }
 
 .progress-ring-v2.large .spent-pct {
   font-size: 2.2rem;
 }
 
+.multi-ring .ring-bg,
+.multi-ring .ring-fill {
+  stroke-width: 12;
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.multi-ring .ring-bg {
+  stroke: var(--bg-panel-light);
+  opacity: 0.6;
+}
+
+.multi-ring .ring-food { stroke: #3482C6; }       
+.multi-ring .ring-transport { stroke: #1E9454; }  
+.multi-ring .ring-grocery { stroke: #C73B4C; }    
+.multi-ring .ring-others { stroke: #E28735; }     
+
 .spending-breakdown {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.2rem;
 }
 
 .breakdown-item {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   font-size: 0.95rem;
 }
 
-.breakdown-item .label { color: var(--text-secondary); margin-right: 2rem;}
-.breakdown-item .val { font-weight: 600; }
+.breakdown-item .label { 
+  color: var(--text-secondary); 
+  font-weight: 500;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.breakdown-item .val { 
+  margin-left: 18px;
+  font-weight: 600; 
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.breakdown-item .limit-text {
+  color: var(--text-secondary);
+  font-size: 0.85em;
+  font-weight: 400;
+}
+
 .breakdown-item.border-top {
   margin-top: 0.5rem;
   padding-top: 1rem;
