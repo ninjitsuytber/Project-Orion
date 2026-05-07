@@ -147,6 +147,39 @@ preview.forEach(badge => {
 });
 }
 
+function renderBadgesPopup() {
+
+  const overlay = document.getElementById('badges-popup-overlay');
+  const grid = document.getElementById('badges-popup-grid');
+
+  if (!overlay || !grid) return;
+
+  grid.innerHTML = '';
+
+  BADGES.forEach((badge, index) => {
+
+    const unlocked = userProfile.badges.includes(badge.id);
+
+    const img = unlocked
+      ? BADGE_ASSETS[badge.id].color
+      : BADGE_ASSETS[badge.id].black;
+
+    const isLastSingle = index === BADGES.length - 1;
+
+    grid.innerHTML += `
+      <div class="popup-badge-item ${isLastSingle ? 'last-single' : ''}">
+        
+        <img src="${img}" alt="${badge.name}">
+        
+        <span>${badge.name}</span>
+
+      </div>
+    `;
+  });
+
+  overlay.style.display = 'flex';
+}
+
 //Show all badges in rewards page
 function renderAllBadges() {
   const container = document.getElementById("all-badges");
@@ -426,6 +459,7 @@ async function syncUserData() {
       userProfile.daily_spending_limit = Number(profile.daily_spending_limit) || 0;
       if (userProfile.monthly_income > 0) {
         const dailyLimit = Math.max(0, (userProfile.monthly_income - (userProfile.savings_goal || userProfile.monthly_income * 0.2)) / 30);
+        userProfile.daily_spending_limit = dailyLimit;
         userProfile.category_budgets = {
           food:      dailyLimit * 0.35,
           transport: dailyLimit * 0.20,
@@ -565,7 +599,8 @@ async function syncUserData() {
       .order('created_at', { ascending: false })
       .limit(10);
 
-    renderTransactions(transactions || []);
+    userProfile.transactions = transactions || [];
+    renderTransactions(userProfile.transactions);
 
     // 6. Fetch App Activities
     const { data: activities } = await supabase
@@ -701,6 +736,7 @@ async function updateDashboard() {
   initActivityTabs();
   renderBadgePreview();
   renderAllBadges();
+  fetchNotice();
 }
 
 function updateRewardsUI() {
@@ -1458,23 +1494,22 @@ document.getElementById('withdraw-money-form')?.addEventListener('submit', (e) =
   withdrawMoney(amount);
 });
 
-document.getElementById("btn-view-all-badges")?.addEventListener("click", (e) => {
+document.getElementById('btn-view-all-badges')
+?.addEventListener('click', (e) => {
   e.preventDefault();
+  renderBadgesPopup();
+});
 
-  const all = document.getElementById("all-badges");
-  const preview = document.getElementById("badge-preview-row");
+document.getElementById('close-badges-popup')
+?.addEventListener('click', () => {
+  document.getElementById('badges-popup-overlay').style.display = 'none';
+});
 
-  if (!all || !preview) return;
+document.getElementById('badges-popup-overlay')
+?.addEventListener('click', (e) => {
 
-  const isHidden = getComputedStyle(all).display === "none";
-
-  if (isHidden) {
-    renderAllBadges();
-    all.style.display = "grid";
-    preview.style.display = "none";
-  } else {
-    all.style.display = "none";
-    preview.style.display = "flex";
+  if (e.target.id === 'badges-popup-overlay') {
+    document.getElementById('badges-popup-overlay').style.display = 'none';
   }
 });
 
@@ -1689,6 +1724,148 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden && userProfile.id && !isDemo) {
     updateDashboard();
   }
+});
+
+// ─── AI Chat ─────────────────────────────────────────────────────────────────
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
+
+async function fetchNotice() {
+  if (!BACKEND_URL || !userProfile.id) return;
+
+  const recentTx = (userProfile.transactions || []).slice(0, 5)
+    .filter(t => ['send', 'save', 'withdraw', 'add'].includes(t.type))
+    .map(t => {
+      const desc = t.description ? ` (${t.description})` : '';
+      return `${t.type} RM ${parseFloat(t.amount).toFixed(2)}${desc}`;
+    })
+    .join('; ');
+
+  const cs = userProfile.category_spent || {};
+  const categoryDetail = Object.entries(cs)
+    .filter(([, v]) => v > 0)
+    .map(([k, v]) => `${k} RM ${v.toFixed(2)}`)
+    .join(', ');
+
+  const parts = [];
+  if (recentTx) parts.push(`Recent: ${recentTx}`);
+  if (categoryDetail) parts.push(`Spent today by category: ${categoryDetail}`);
+  if (userProfile.saved_today > 0) parts.push(`Saved today: RM ${userProfile.saved_today.toFixed(2)}`);
+  if (userProfile.streak > 0) parts.push(`Saving streak: ${userProfile.streak} days`);
+  const activity = parts.join('. ') || 'no recent activity';
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/notice`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recent_activity: activity,
+        daily_limit: userProfile.daily_spending_limit || 0,
+        total_spent_today: Object.values(cs).reduce((a, b) => a + b, 0),
+      }),
+    });
+    if (!res.ok) {
+      console.warn('[Orion AI] notice fetch failed:', res.status, await res.text());
+      return;
+    }
+    const data = await res.json();
+    if (data.notice) updateText('notice-bar-text', data.notice);
+  } catch (err) {
+    console.warn('[Orion AI] notice error:', err);
+  }
+}
+
+let _chatContext = '';
+
+function buildChatContext() {
+  const spent = Object.values(userProfile.category_spent || {}).reduce((a, b) => a + b, 0);
+  return (
+    `Balance: RM ${(userProfile.balance || 0).toFixed(2)}, ` +
+    `Savings jar: RM ${(userProfile.saving_balance || 0).toFixed(2)}, ` +
+    `Daily limit: RM ${(userProfile.daily_spending_limit || 0).toFixed(2)}, ` +
+    `Spent today: RM ${spent.toFixed(2)}, ` +
+    `Streak: ${userProfile.streak || 0} days, ` +
+    `XP: ${userProfile.xp || 0}`
+  );
+}
+
+const _chatHistory = [];
+
+function openChat() {
+  const overlay = document.getElementById('ai-chat-overlay');
+  if (overlay) {
+    overlay.style.display = 'flex';
+    _chatContext = buildChatContext();
+    document.getElementById('ai-chat-input')?.focus();
+  }
+}
+
+function closeChat() {
+  const overlay = document.getElementById('ai-chat-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function appendChatMessage(role, text) {
+  const container = document.getElementById('ai-chat-messages');
+  if (!container) return;
+  const div = document.createElement('div');
+  div.className = `ai-chat-bubble ${role}`;
+  div.textContent = text;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('ai-chat-input');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  appendChatMessage('user', text);
+  _chatHistory.push({ role: 'user', content: text });
+
+  const sendBtn = document.getElementById('ai-chat-send');
+  if (sendBtn) sendBtn.disabled = true;
+
+  if (!BACKEND_URL) {
+    appendChatMessage('ai', 'Aiyah, backend not connected lah. Add VITE_BACKEND_URL first!');
+    if (sendBtn) sendBtn.disabled = false;
+    return;
+  }
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: _chatHistory, context: _chatContext }),
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      console.warn('[Orion AI] chat error:', res.status, errText);
+      appendChatMessage('ai', 'Aiyah, something went wrong on my end. Try again lah!');
+    } else {
+      const data = await res.json();
+      const reply = data.reply || 'Hmm, cannot think right now. Try again lah!';
+      appendChatMessage('ai', reply);
+      _chatHistory.push({ role: 'assistant', content: reply });
+    }
+  } catch (err) {
+    console.warn('[Orion AI] chat fetch error:', err);
+    appendChatMessage('ai', 'Cannot reach the server lah! Make sure backend is running.');
+  } finally {
+    if (sendBtn) sendBtn.disabled = false;
+  }
+}
+
+document.getElementById('notice-bar')?.addEventListener('click', openChat);
+document.getElementById('ai-chat-close')?.addEventListener('click', closeChat);
+document.getElementById('ai-chat-send')?.addEventListener('click', sendChatMessage);
+document.getElementById('ai-chat-input')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendChatMessage();
+});
+document.getElementById('ai-chat-overlay')?.addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeChat();
 });
 
 renderApp();
