@@ -11,7 +11,7 @@ const pageHome = document.getElementById('page-home');
 const pageRewards = document.getElementById('page-rewards');
 const pageDiscover = document.getElementById('page-discover');
 const pageMe = document.getElementById('page-me');
-/*const spend = document.querySelector('.')*/
+const spend = document.querySelector('.list-row list-row--clickable');
 
 const navItems = {
   home: document.getElementById('nav-home'),
@@ -161,7 +161,6 @@ async function logActivity(activityName) {
 // Modals
 const modalContainer = document.getElementById('modal-container');
 const modals = {
-  onboarding: document.getElementById('modal-onboarding'),
   add: document.getElementById('modal-add-money'),
   send: document.getElementById('modal-send-money'),
   save: document.getElementById('modal-save-money'),
@@ -175,7 +174,6 @@ const modals = {
 // App State
 let pendingWithdrawAmount = 0;
 let isDemo = false;
-let dailyLoginChecked = false;
 let isBalanceHidden = false;
 let userProfile = {
   id: null,
@@ -229,8 +227,7 @@ async function renderApp() {
 }
 
 async function checkDailyLoginBonus() {
-  if (isDemo || !userProfile.id || dailyLoginChecked) return;
-  dailyLoginChecked = true;
+  if (isDemo || !userProfile.id) return;
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -247,7 +244,6 @@ async function checkDailyLoginBonus() {
     }
   } catch (err) {
     console.error('Daily login bonus error:', err);
-    dailyLoginChecked = false;
   }
 }
 
@@ -263,15 +259,13 @@ async function checkOnboardingAndRoute() {
 
     // age_range is NULL/empty until the onboarding form is submitted
     if (profile && profile.age_range) {
+      routeTo('home');
       await checkDailyLoginBonus();
-      await routeTo('home');
     } else {
-      await routeTo('home');
       showOnboarding();
     }
   } catch (err) {
     console.error("Routing error:", err);
-    await routeTo('home');
     showOnboarding();
   }
 }
@@ -581,10 +575,12 @@ function hideAllViews() {
   loginView.style.display = 'none';
   registerView.style.display = 'none';
   mainView.style.display = 'none';
+  if (onboardingView) onboardingView.style.display = 'none';
 }
 
 function showOnboarding() {
-  openModal('onboarding');
+  hideAllViews();
+  onboardingView.style.display = 'flex';
 }
 
 function hideAllPages() {
@@ -864,7 +860,7 @@ function showError(id, msg) {
   }
 }
 
-async function routeTo(page) {
+function routeTo(page) {
   hideAllViews();
   mainView.style.display = 'block';
   hideAllPages();
@@ -872,14 +868,13 @@ async function routeTo(page) {
 
   if (page === 'home') {
     pageHome.style.display = 'block';
-    await updateDashboard();
+    updateDashboard();
     window.dispatchEvent(new Event('resize'));
   } else if (page === 'rewards') {
     pageRewards.style.display = 'block';
-    await updateDashboard();
   } else if (page === 'discover') {
     pageDiscover.style.display = 'block';
-    await updateDashboard();
+    updateDashboard();
   } else if (page === 'me') {
     pageMe.style.display = 'block';
     updateProfile();
@@ -1086,13 +1081,12 @@ document.getElementById('discover-widget')?.addEventListener('click', () => rout
 document.getElementById('rewards-widget')?.addEventListener('click', () => routeTo('rewards'));
 
 // Demo Login
-document.getElementById('btn-demo-login')?.addEventListener('click', async () => {
+document.getElementById('btn-demo-login')?.addEventListener('click', () => {
   isDemo = true;
   userProfile.name = 'Demo User';
   userProfile.email = 'demo@projectorion.test';
   userProfile.balance = 1000;
   userProfile.saving_balance = 0;
-  await routeTo('home');
   showOnboarding();
 });
 
@@ -1155,7 +1149,6 @@ document.getElementById('register-form')?.addEventListener('submit', async (e) =
         userProfile.email = data.user.email;
         userProfile.name = data.user.user_metadata?.name || name;
       }
-      await routeTo('home');
       showOnboarding();
     }
   } catch (err) {
@@ -1166,6 +1159,11 @@ document.getElementById('register-form')?.addEventListener('submit', async (e) =
   }
 });
 
+/*function setSpendingLimits(){
+
+}
+
+btn.addEventListerner("click", setSpendingLimits);*/
 // Logout Listener
 document.getElementById('btn-logout')?.addEventListener('click', async () => {
   isDemo = false;
@@ -1279,7 +1277,7 @@ document.getElementById('onboarding-form')?.addEventListener('submit', async (e)
   };
 
   if (isDemo) {
-    closeModal();
+    routeTo('home');
     return;
   }
 
@@ -1306,8 +1304,7 @@ document.getElementById('onboarding-form')?.addEventListener('submit', async (e)
     return;
   }
 
-  closeModal();
-  await updateDashboard();
+  routeTo('home');
 });
 
 document.getElementById('btn-update-financials')?.addEventListener('click', () => {
