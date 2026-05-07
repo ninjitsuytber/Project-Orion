@@ -55,6 +55,33 @@
     </div>
 
     <!-- Onboarding Guide View -->
+    <div id="onboarding-view" class="auth-container" style="display: none;">
+      <div class="auth-box">
+        <h2>Welcome to Orion!</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">
+          Let's set up your profile to give you the best financial recommendations.
+        </p>
+        <form id="onboarding-form" class="auth-form">
+          <select id="onboarding-age" class="auth-input" required style="appearance: none; background: rgba(0,0,0,0.2);">
+            <option value="" disabled selected>Select Age Range</option>
+            <option value="under_20">Under 20</option>
+            <option value="20_25">20 - 25</option>
+            <option value="26_30">26 - 30</option>
+            <option value="31_40">31 - 40</option>
+            <option value="above_40">Above 40</option>
+          </select>
+          <select id="onboarding-salary" class="auth-input" required style="appearance: none; background: rgba(0,0,0,0.2);">
+            <option value="" disabled selected>Select Monthly Salary</option>
+            <option value="2000">Under RM 2,000</option>
+            <option value="3000">RM 2,000 - RM 4,000</option>
+            <option value="5000">RM 4,001 - RM 6,000</option>
+            <option value="7000">RM 6,001 - RM 8,000</option>
+            <option value="10000">Above RM 8,000</option>
+          </select>
+          <button type="submit" class="auth-btn">Complete Setup</button>
+        </form>
+      </div>
+    </div>
 
     <!-- Main App View -->
     <div id="main-view" style="display: none;">
@@ -771,6 +798,17 @@
                   </svg>
                 </div>
                 <div class="list-body"><span class="list-title">Spending Limits</span></div>
+
+                  <div class="set-daily-spending">
+                    <div class="daily-spending-header">
+                      <h1>Set up your daily spending limits</h1>
+                    </div>
+                    <div class="daily-spending-input">
+                      <input class="daily-spending-input" placeholder="Amount (RM)">
+                      <button class="daily-spending-enter">Enter</button>
+                    </div>
+                  </div>
+
                 <svg class="list-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
                   viewBox="0 0 24 24">
                   <polyline points="9 18 15 12 9 6"></polyline>
@@ -859,33 +897,6 @@
 
   <!-- Modals -->
   <div id="modal-container" class="modal-overlay" style="display: none;">
-    <!-- Onboarding Modal -->
-    <div id="modal-onboarding" class="modal-content auth-box" style="display: none;">
-      <h2>Welcome to Orion!</h2>
-      <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">
-        Let's set up your profile to give you the best financial recommendations.
-      </p>
-      <form id="onboarding-form" class="auth-form">
-        <select id="onboarding-age" class="auth-input" required style="appearance: none; background: rgba(0,0,0,0.2);">
-          <option value="" disabled selected>Select Age Range</option>
-          <option value="under_20">Under 20</option>
-          <option value="20_25">20 - 25</option>
-          <option value="26_30">26 - 30</option>
-          <option value="31_40">31 - 40</option>
-          <option value="above_40">Above 40</option>
-        </select>
-        <select id="onboarding-salary" class="auth-input" required style="appearance: none; background: rgba(0,0,0,0.2);">
-          <option value="" disabled selected>Select Monthly Salary</option>
-          <option value="2000">Under RM 2,000</option>
-          <option value="3000">RM 2,000 - RM 4,000</option>
-          <option value="5000">RM 4,001 - RM 6,000</option>
-          <option value="7000">RM 6,001 - RM 8,000</option>
-          <option value="10000">Above RM 8,000</option>
-        </select>
-        <button type="submit" class="auth-btn">Complete Setup</button>
-      </form>
-    </div>
-
     <!-- Add Money Modal -->
     <div id="modal-add-money" class="modal-content auth-box" style="display: none;">
       <h2>Add Money</h2>
