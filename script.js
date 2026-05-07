@@ -704,8 +704,9 @@ function updateRewardsUI() {
   const badgeImg = document.getElementById('rw-current-badge-img');
 
   if (badgeImg && asset) {
-  badgeImg.src = asset.color;
-}
+    badgeImg.src = asset.color;
+  }
+  updateText('rw-badge-name', currentBadge.name);
 
   // Sync Home Page Rewards Widget
   const homeGiftBoxes = document.getElementById('home-gift-boxes');
@@ -1127,10 +1128,11 @@ async function updateProfile() {
   const badgeImg = document.getElementById('profile-badge-img');
   const badgeName = document.getElementById('profile-badge-name');
 
-const asset = BADGE_ASSETS[currentBadge.id];
-if (badgeImg && asset) {
-  badgeImg.src = asset.color;
-}
+  const asset = BADGE_ASSETS[currentBadge.id];
+  if (badgeImg && asset) {
+    badgeImg.src = asset.color;
+  }
+  if (badgeName) badgeName.textContent = currentBadge.name;
 
   const theme = BADGE_THEMES.find(t => t.tier === userProfile.tier) || BADGE_THEMES[0];
   const container = document.getElementById('profile-badge-container');
