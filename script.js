@@ -186,6 +186,7 @@ const modals = {
   withdraw: document.getElementById('modal-withdraw-money'),
   confirmWithdraw: document.getElementById('modal-confirm-withdraw'),
   qr: document.getElementById('modal-scan-qr'),
+  etf: document.getElementById('modal-discover-etf'),
   goal: document.getElementById('modal-edit-goal'),
   financials: document.getElementById('modal-update-financials'),
 };
@@ -1193,7 +1194,6 @@ navItems.rewards?.addEventListener('click', () => routeTo('rewards'));
 navItems.discover?.addEventListener('click', () => routeTo('discover'));
 navItems.me?.addEventListener('click', () => routeTo('me'));
 
-document.getElementById('discover-widget')?.addEventListener('click', () => routeTo('discover'));
 document.getElementById('rewards-widget')?.addEventListener('click', () => routeTo('rewards'));
 
 // Demo Login
@@ -1318,6 +1318,8 @@ document.getElementById('withdraw-money-form')?.addEventListener('submit', (e) =
 document.getElementById('btn-add-money')?.addEventListener('click', () => openModal('add'));
 document.getElementById('btn-send-money')?.addEventListener('click', () => openModal('send'));
 document.getElementById('btn-scan-qr')?.addEventListener('click', () => openModal('qr'));
+document.getElementById('btn-discover-etf')?.addEventListener('click', () => openModal('etf'));
+document.getElementById('btn-discover-savings')?.addEventListener('click', () => routeTo('discover'));
 document.getElementById('btn-save-in-detail')?.addEventListener('click', () => openModal('save'));
 document.getElementById('btn-withdraw-detail')?.addEventListener('click', () => {
   const balanceEl = document.getElementById('withdraw-jar-balance');
