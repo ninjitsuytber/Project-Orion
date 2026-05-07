@@ -693,6 +693,8 @@ function updateDailySpendingsUI() {
 
   updateText('detail-spent-pct', `${Math.round(spentPercentage)}%`);
   setRingProgress('detail-spending-ring-fill', 82, spentPercentage);
+  stopWaveAnimation();
+  initWaveAnimation('.spending-card');
 
   const dailyCatLimits = {
     food:      globalDailyLimit * 0.35,
@@ -1134,7 +1136,7 @@ function routeTo(page) {
   if (page === 'home') {
     pageHome.style.display = 'block';
     updateDashboard();
-    initWaveAnimation('.spending-card');
+
     window.dispatchEvent(new Event('resize'));
   } else {
     stopWaveAnimation();
@@ -1224,25 +1226,43 @@ function initWaveAnimation(selector) {
         canvas = document.createElement('canvas');
         container.appendChild(canvas);
     }
-
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
     const ctx = canvas.getContext('2d');
 
     const monthlyBudget = userProfile.monthly_income - userProfile.savings_goal;
     const dailyLimit = monthlyBudget / 30;
-    const remainingToday = Math.max(0, dailyLimit - userProfile.spent_today);
+    const remainingToday = dailyLimit - userProfile.spent_today;
     const spentPercentage = Math.min(100, (userProfile.spent_today / dailyLimit) * 100);
-    const verticalBaseline = canvas.height * (1-(spentPercentage/100)); 
+    if (spentPercentage>100){
+      spentPercentage=100;
+    }
+    else if (spentPercentage<0){
+      spentPercentage=0;
+    }
+    var verticalBaseline = canvas.height * (spentPercentage/100); 
+
+
+    console.log("monthly income:"+userProfile.monthly_income);
+    console.log("saving goals:"+userProfile.savings_goal);
+    console.log("monthlyBudget:"+monthlyBudget);
+    console.log("dailyLimit"+ dailyLimit);
+    console.log("spent_today"+userProfile.spent_today);
+    
+    console.log('remainingToday'+((userProfile.spent_today / dailyLimit) * 100));
+    console.log('canvas height:'+canvas.height);
+    console.log('verticalBaseline'+verticalBaseline);
     let color="#ffffff";
 
 
     if (spentPercentage>=67 && spentPercentage<=100){
-      color='#43f6ff'
+      color='#ff9292'
     }
     else if (spentPercentage>=33 && spentPercentage<=66){
       color='#fdf111'
     }
     else{
-      color='#ff9292'
+      color='#43f6ff'
     };
 
     const params = {
