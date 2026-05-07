@@ -456,17 +456,21 @@ async function syncUserData() {
       userProfile.savings_goal = Number(profile.savings_goal) || 300;
       userProfile.monthly_income = Number(profile.monthly_income) || 0;
       userProfile.age_range = profile.age_range || '';
-      userProfile.daily_spending_limit = Number(profile.daily_spending_limit) || 0;
-      if (userProfile.monthly_income > 0) {
-        const dailyLimit = Math.max(0, (userProfile.monthly_income - (userProfile.savings_goal || userProfile.monthly_income * 0.2)) / 30);
-        userProfile.daily_spending_limit = dailyLimit;
-        userProfile.category_budgets = {
-          food:      dailyLimit * 0.35,
-          transport: dailyLimit * 0.20,
-          grocery:   dailyLimit * 0.25,
-          others:    dailyLimit * 0.20
-        };
+      const savedLimit = Number(profile.daily_spending_limit);
+
+      if (savedLimit > 0) {
+          userProfile.daily_spending_limit = savedLimit;
+      } else if (userProfile.monthly_income > 0) {
+          userProfile.daily_spending_limit = Math.max(0, (userProfile.monthly_income - userProfile.savings_goal) / 30);
       }
+
+      const finalLimit = userProfile.daily_spending_limit;
+      userProfile.category_budgets = {
+          food:      finalLimit * 0.35,
+          transport: finalLimit * 0.20,
+          grocery:   finalLimit * 0.25,
+          others:    finalLimit * 0.20
+      };
     } else {
       // Create profile if doesn't exist
       const { data: newProfile } = await supabase
@@ -1716,31 +1720,35 @@ document.getElementById('spending-limit-form')?.addEventListener('submit', async
   e.preventDefault();
   const newLimit = parseFloat(document.getElementById('input-daily-limit').value);
 
-  if (newLimit > 0) {
-    userProfile.daily_spending_limit = newLimit;
-    userProfile.category_budgets = {
-      food:      newLimit * 0.35,
-      transport: newLimit * 0.20,
-      grocery:   newLimit * 0.25,
-      others:    newLimit * 0.20
-    };
-
-    if (!isDemo && userProfile.id) {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ daily_spending_limit: newLimit })
-        .eq('id', userProfile.id);
-
-      if (error) {
-        alert('Error updating limit: ' + error.message);
-        return;
-      }
-    }
-
-    updateDashboard();
-    closeModal();
-    alert('Daily spending limit updated to RM ' + newLimit.toFixed(2));
+  if (isNaN(newLimit) || newLimit <= 0) {
+    alert('Please enter a valid amount greater than zero.');
+    return;
   }
+
+  userProfile.daily_spending_limit = newLimit;
+  
+  userProfile.category_budgets = {
+    food:      newLimit * 0.35,
+    transport: newLimit * 0.20,
+    grocery:   newLimit * 0.25,
+    others:    newLimit * 0.20
+  };
+
+  if (!isDemo && userProfile.id) {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ daily_spending_limit: newLimit })
+      .eq('id', userProfile.id);
+
+    if (error) {
+      alert('Error updating limit: ' + error.message);
+      return;
+    }
+  }
+
+  updateDashboard();
+  closeModal();
+  alert('Daily spending limit updated to RM ' + newLimit.toFixed(2));
 });
 
 document.addEventListener('visibilitychange', () => {
