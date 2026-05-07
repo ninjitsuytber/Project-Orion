@@ -283,6 +283,8 @@ body {
   align-items: center;
   width: 100%;
   margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
 }
 
 .daily-limit-badge {
@@ -377,6 +379,8 @@ body {
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid var(--border-light);
+  position: relative;
+  z-index: 1;
 }
 
 .spend-stat {
@@ -1500,13 +1504,15 @@ body {
   display: flex;
   align-items: center;
   gap: 5px;
-  background: rgba(245,158,11,0.12);
-  color: #f59e0b;
+  background: rgba(205,127,50,0.18);
+  color: #cd7f32;
+  border: 1px solid transparent;
   padding: 5px 12px;
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 600;
   flex-shrink: 0;
+  transition: background 0.3s, color 0.3s, border-color 0.3s;
 }
 
 @media (max-width: 768px) {

@@ -47,6 +47,19 @@ const BADGES = [
   { id: "b10", name: "Sultan Simpanan", tierRequired: 10, img: "assets/badges/b10.svg" }
 ];
 
+const BADGE_THEMES = [
+  { tier: 1,  color: '#cd7f32', bg: 'rgba(205,127,50,0.18)'  },  // Bronze
+  { tier: 2,  color: '#a8a9ad', bg: 'rgba(168,169,173,0.18)' },  // Silver
+  { tier: 3,  color: '#ffd700', bg: 'rgba(255,215,0,0.15)'   },  // Gold
+  { tier: 4,  color: '#4f9eff', bg: 'rgba(79,158,255,0.18)'  },  // Sapphire
+  { tier: 5,  color: '#ff4d6d', bg: 'rgba(255,77,109,0.18)'  },  // Ruby
+  { tier: 6,  color: '#50c878', bg: 'rgba(80,200,120,0.18)'  },  // Emerald
+  { tier: 7,  color: '#c084fc', bg: 'rgba(192,132,252,0.18)' },  // Purple Crystal
+  { tier: 8,  color: '#f472b6', bg: 'rgba(244,114,182,0.18)' },  // Pink Crystal
+  { tier: 9,  color: '#94a3b8', bg: 'rgba(148,163,184,0.18)' },  // Gray Obsidian
+  { tier: 10, color: '#e0f7ff', bg: 'rgba(224,247,255,0.22)' },  // Diamond
+];
+
 //Tier Update
 function calculateTier(xp) {
   let tier = 1;
@@ -79,7 +92,7 @@ function unlockBadge(tier) {
 //Add XP
 async function addXP(amount, reason = "") {
   const oldTier = userProfile.tier;
-  userProfile.xp += amount;
+  userProfile.xp = Math.max(0, userProfile.xp + amount);
   const newTier = calculateTier(userProfile.xp);
   userProfile.tier = newTier;
 
@@ -106,7 +119,10 @@ async function addXP(amount, reason = "") {
       tier: newTier
     });
 
-    // 2. Insert new badges into DB 
+    // Mirror XP on the profiles row for easy querying
+    await supabase.from('profiles').update({ xp: userProfile.xp }).eq('id', userProfile.id);
+
+    // 2. Insert new badges into DB
     for (const badge of unlockedBadges) {
       await supabase.from('user_badges').insert({
         user_id: userProfile.id,
@@ -126,6 +142,19 @@ async function addXP(amount, reason = "") {
   }
 
   return { xpAdded: amount, newTier, unlockedBadges };
+}
+
+async function logActivity(activityName) {
+  if (isDemo || !userProfile.id) return;
+  try {
+    await supabase.from('app_activities').insert([{
+      user_id: userProfile.id,
+      activity_name: activityName,
+      xp_earned: 0
+    }]);
+  } catch (err) {
+    console.error('logActivity error:', err);
+  }
 }
 
 // Modals
@@ -181,32 +210,40 @@ async function renderApp() {
       userProfile.email = session.user.email;
       userProfile.name = session.user.user_metadata.name || 'User';
       if (_event === 'SIGNED_IN' || _event === 'INITIAL_SESSION') {
-         await checkOnboardingAndRoute();
+        await checkOnboardingAndRoute();
       }
-    } else if (!isDemo) {
-      showLogin();
+    } else {
+      Object.assign(userProfile, {
+        id: null, name: 'User', email: '', balance: 0, saving_balance: 0,
+        spent_today: 0, saved_today: 0, streak: 0, xp: 0, tier: 1,
+        badges: ['b1'], age_range: '', monthly_income: 1000, savings_goal: 1,
+        category_budgets: { housing: 0, food: 0, transport: 0, others: 0 },
+        category_spent: { housing: 0, food: 0, transport: 0, others: 0 }
+      });
+      if (!isDemo) showLogin();
     }
   });
 }
 
 async function checkOnboardingAndRoute() {
-  if (isDemo) return; 
-  
+  if (isDemo) return;
+
   try {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, age_range')
       .eq('id', userProfile.id)
       .maybeSingle();
 
-    if (profile) {
+    // age_range is NULL/empty until the onboarding form is submitted
+    if (profile && profile.age_range) {
       routeTo('home');
     } else {
       showOnboarding();
     }
   } catch (err) {
     console.error("Routing error:", err);
-    routeTo('home'); 
+    showOnboarding();
   }
 }
 
@@ -289,7 +326,7 @@ async function syncUserData() {
       .eq('user_id', userProfile.id)
       .gte('created_at', today.toISOString());
 
-    userProfile.spent_today = todayTxs?.filter(tx => tx.type === 'send' || tx.type === 'spend').reduce((sum, tx) => sum + Number(tx.amount), 0) || 0;
+    userProfile.spent_today = todayTxs?.filter(tx => tx.type === 'send').reduce((sum, tx) => sum + Number(tx.amount), 0) || 0;
     userProfile.saved_today = todayTxs?.filter(tx => tx.type === 'save').reduce((sum, tx) => sum + Number(tx.amount), 0) || 0;
 
     // 5. Fetch Transactions for Activity Log
@@ -301,6 +338,16 @@ async function syncUserData() {
       .limit(10);
 
     renderTransactions(transactions || []);
+
+    // 6. Fetch App Activities
+    const { data: activities } = await supabase
+      .from('app_activities')
+      .select('*')
+      .eq('user_id', userProfile.id)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    renderAppActivities(activities || []);
 
   } catch (err) {
     console.error('Error syncing data:', err);
@@ -317,7 +364,7 @@ function renderTransactions(transactions) {
   }
 
   list.innerHTML = transactions.map(tx => {
-    const isPositive = tx.type === 'add' || tx.type === 'receive';
+    const isPositive = tx.type === 'add' || tx.type === 'receive' || tx.type === 'save';
     const amountPrefix = isPositive ? '+' : '-';
     const amountClass = isPositive ? 'positive' : 'negative';
     const date = new Date(tx.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -334,6 +381,39 @@ function renderTransactions(transactions) {
           </div>
         </div>
         <span class="tx-amount ${amountClass}">${amountPrefix}RM ${Number(tx.amount).toFixed(2)}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderAppActivities(activities) {
+  const list = document.querySelector('#tab-app-activities .transactions-list');
+  if (!list) return;
+
+  if (activities.length === 0) {
+    list.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 1rem;">No recent app activity</p>';
+    return;
+  }
+
+  list.innerHTML = activities.map(activity => {
+    const date = new Date(activity.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const xp = activity.xp_earned;
+    const xpClass = xp > 0 ? 'positive' : xp < 0 ? 'negative' : '';
+    const xpLabel = xp === 0 ? '—' : xp > 0 ? `+${xp} XP` : `${xp} XP`;
+    return `
+      <div class="tx-item">
+        <div class="tx-left">
+          <div class="tx-icon">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </div>
+          <div class="tx-info">
+            <h4>${activity.activity_name}</h4>
+            <p>${date}</p>
+          </div>
+        </div>
+        <span class="tx-amount ${xpClass}">${xpLabel}</span>
       </div>
     `;
   }).join('');
@@ -519,72 +599,103 @@ async function addMoney(amount, bank) {
   }
   if (isDemo) {
     userProfile.balance += amount;
+    await addXP(10, "First Reload");
     updateDashboard();
     closeModal();
     return;
   }
 
-  const { error: profileError } = await supabase
-    .from('profiles')
-    .update({ balance: userProfile.balance + amount })
-    .eq('id', userProfile.id);
+  const { data, error } = await supabase.rpc('add_money', {
+    amount: amount,
+    bank_name: bank
+  });
 
-  if (!profileError) {
-    await supabase.from('transactions').insert([{
-      user_id: userProfile.id,
-      type: 'add',
-      amount: amount,
-      description: `Reload via ${bank}`
-    }]);
+  if (!error && data?.success) {
+    await addXP(20, "Account Reloaded");
     updateDashboard();
     closeModal();
+    alert('RM ' + amount.toFixed(2) + ' added successfully!');
+  } else {
+    alert('Error adding money: ' + (error?.message || data?.message || 'Unknown error'));
   }
 }
 
-async function sendMoney(email, amount) {
+async function sendMoney(email, amount, category) {
   const errorEl = document.getElementById('send-money-error');
   if (errorEl) errorEl.style.display = 'none';
+
+  if (!email || !email.includes('@')) {
+    showError('send-money-error', 'Please enter a valid recipient email');
+    return;
+  }
 
   if (isNaN(amount) || amount <= 0) {
     showError('send-money-error', 'Please enter a valid amount greater than zero');
     return;
   }
 
-  if (email === userProfile.email) {
+  if (!category) {
+    showError('send-money-error', 'Please select a transfer category');
+    return;
+  }
+
+  if (email.trim().toLowerCase() === userProfile.email.trim().toLowerCase()) {
     showError('send-money-error', 'You cannot send money to yourself');
     return;
   }
 
   if (amount > userProfile.balance) {
-    showError('send-money-error', 'Insufficient balance');
+    showError('send-money-error', `Insufficient balance (Available: RM ${userProfile.balance.toFixed(2)})`);
     return;
   }
 
   if (isDemo) {
     userProfile.balance -= amount;
-    updateDashboard();
+    await addXP(15, "Money Sent (Demo)");
+    await updateDashboard();
     closeModal();
     return;
   }
 
-  // Use RPC for atomic transfer and to bypass RLS restrictions on updating other users
-  const { data, error } = await supabase.rpc('transfer_money', {
-    target_email: email,
-    amount: amount
-  });
+  const btn = document.querySelector('#send-money-form button[type="submit"]');
+  if (btn) btn.disabled = true;
 
-  if (error) {
-    showError('send-money-error', error.message);
-    return;
+  try {
+    const { data, error } = await supabase.rpc('transfer_money', {
+      target_email: email.trim().toLowerCase(),
+      amount: amount,
+      category: category
+    });
+
+    if (error) {
+      console.error('transfer_money RPC error:', error);
+      showError('send-money-error', error.message || 'Transfer failed. Please try again.');
+      return;
+    }
+
+    // Handle case where Supabase returns JSON as a string
+    const result = typeof data === 'string' ? JSON.parse(data) : data;
+
+    if (!result || !result.success) {
+      showError('send-money-error', result?.message || 'Transfer failed. Please try again.');
+      return;
+    }
+
+    await addXP(30, "Successful Transfer");
+    await updateDashboard();
+
+    document.getElementById('send-email').value = '';
+    document.getElementById('send-amount').value = '';
+    document.getElementById('send-category').value = '';
+
+    closeModal();
+    alert('RM ' + amount.toFixed(2) + ' sent to ' + email);
+  } catch (err) {
+    console.error('sendMoney unexpected error:', err);
+    showError('send-money-error', 'An unexpected error occurred. Please try again.');
+  } finally {
+    if (btn) btn.disabled = false;
   }
-
-  if (data && !data.success) {
-    showError('send-money-error', data.message);
-    return;
-  }
-
-  updateDashboard();
-  closeModal();
 }
 
 async function saveMoney(amount) {
@@ -595,6 +706,7 @@ async function saveMoney(amount) {
     showError('save-money-error', 'Please enter a valid amount greater than zero');
     return;
   }
+
   if (amount > userProfile.balance) {
     showError('save-money-error', 'Insufficient balance');
     return;
@@ -604,50 +716,49 @@ async function saveMoney(amount) {
     userProfile.balance -= amount;
     userProfile.saving_balance += amount;
     userProfile.saved_today += amount;
-    updateDashboard();
+    userProfile.streak = Math.max(1, userProfile.streak);
+    await addXP(50, "Saving Goal Progress (Demo)");
+    await updateDashboard();
     closeModal();
     return;
   }
 
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      balance: userProfile.balance - amount,
-      saving_balance: userProfile.saving_balance + amount
-    })
-    .eq('id', userProfile.id);
+  const submitBtn = document.querySelector('#save-money-form [type="submit"]');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Saving...'; }
 
-  if (!error) {
-    await supabase.from('transactions').insert([{
-      user_id: userProfile.id,
-      type: 'save',
-      amount,
-      description: 'Saved to Money Jar'
-    }]);
-    // Log App Activity (XP)
-    await supabase.from('app_activities').insert([{
-      user_id: userProfile.id,
-      activity_name: 'Saving Goal Progress',
-      xp_earned: 50
-    }]);
+  try {
+    const { data, error } = await supabase.rpc('manage_savings', {
+      amount: amount,
+      direction: 'save'
+    });
 
-    updateDashboard();
-    closeModal();
+    if (!error && data?.success) {
+      await addXP(50, "Saving Reward");
+      await updateDashboard();
+      closeModal();
+      const saveInput = document.getElementById('save-amount');
+      if (saveInput) saveInput.value = '';
+      alert('RM ' + amount.toFixed(2) + ' saved to your jar!');
+    } else {
+      showError('save-money-error', error?.message || data?.message || 'Error saving money');
+    }
+  } finally {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Save Money'; }
   }
 }
 
 function withdrawMoney(amount) {
+  const errorEl = document.getElementById('withdraw-money-error');
+  if (errorEl) { errorEl.style.display = 'none'; errorEl.textContent = ''; }
+
   if (isNaN(amount) || amount <= 0) {
     showError('withdraw-money-error', 'Please enter a valid amount greater than zero');
     return;
   }
   if (amount > userProfile.saving_balance) {
-    showError('withdraw-money-error', 'Insufficient jar balance');
+    showError('withdraw-money-error', `Insufficient jar balance. Available: RM ${userProfile.saving_balance.toFixed(2)}`);
     return;
   }
-
-  const errorEl = document.getElementById('withdraw-money-error');
-  if (errorEl) errorEl.style.display = 'none';
 
   pendingWithdrawAmount = amount;
   document.getElementById('confirm-withdraw-text').textContent = `Are you sure you want to withdraw RM ${amount.toFixed(2)} from your jar?`;
@@ -659,41 +770,41 @@ async function processWithdraw() {
   const amount = pendingWithdrawAmount;
   if (amount <= 0) return;
 
-  // Streak logic: If withdraw amount >= total saved today, streak is lost
-  let newStreak = userProfile.streak;
-  if (userProfile.saved_today > 0 && amount >= userProfile.saved_today) {
-    newStreak = 0;
-    alert('Withdrawal amount exceeds today\'s savings. Your streak has been reset.');
-  }
+  const streakWillReset = userProfile.saved_today > 0 && amount >= userProfile.saved_today;
 
   if (isDemo) {
     userProfile.balance += amount;
     userProfile.saving_balance -= amount;
-    userProfile.streak = newStreak;
-    updateDashboard();
+    if (streakWillReset) userProfile.streak = 0;
+    await updateDashboard();
     closeModal();
+    if (streakWillReset) alert('Your streak has been reset because you withdrew all of today\'s savings.');
     return;
   }
 
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      balance: userProfile.balance + amount,
-      saving_balance: userProfile.saving_balance - amount,
-      streak: newStreak
-    })
-    .eq('id', userProfile.id);
+  const confirmBtn = document.getElementById('btn-confirm-withdraw-yes');
+  if (confirmBtn) confirmBtn.disabled = true;
 
-  if (!error) {
-    await supabase.from('transactions').insert([{
-      user_id: userProfile.id,
-      type: 'withdraw',
-      amount,
-      description: 'Withdrawn from Money Jar'
-    }]);
+  try {
+    const { data, error } = await supabase.rpc('manage_savings', {
+      amount: amount,
+      direction: 'withdraw'
+    });
 
-    updateDashboard();
-    closeModal();
+    if (!error && data?.success) {
+      pendingWithdrawAmount = 0;
+      const withdrawInput = document.getElementById('withdraw-amount');
+      if (withdrawInput) withdrawInput.value = '';
+      await addXP(-50, "Withdrawal Penalty");
+      await updateDashboard();
+      closeModal();
+      if (streakWillReset) alert('Your streak has been reset because you withdrew all of today\'s savings.\n\n-50 XP penalty applied.');
+      else alert('RM ' + amount.toFixed(2) + ' withdrawn from your jar.\n\n-50 XP penalty applied.');
+    } else {
+      alert('Error withdrawing: ' + (error?.message || data?.message || 'Unknown error'));
+    }
+  } finally {
+    if (confirmBtn) confirmBtn.disabled = false;
   }
 }
 
@@ -753,6 +864,21 @@ async function updateProfile() {
 
   if (nameEl) nameEl.textContent = userProfile.name;
   if (emailEl) emailEl.textContent = userProfile.email;
+
+  const currentBadge = BADGES.find(b => b.tierRequired === userProfile.tier) || BADGES[0];
+  const badgeImg = document.getElementById('profile-badge-img');
+  const badgeName = document.getElementById('profile-badge-name');
+
+  if (badgeImg) badgeImg.src = currentBadge.img;
+  if (badgeName) badgeName.textContent = currentBadge.name;
+
+  const theme = BADGE_THEMES.find(t => t.tier === userProfile.tier) || BADGE_THEMES[0];
+  const container = document.getElementById('profile-badge-container');
+  if (container) {
+    container.style.background = theme.bg;
+    container.style.color = theme.color;
+    container.style.border = `1px solid ${theme.color}40`;
+  }
 }
 
 function showLogin() {
@@ -955,7 +1081,7 @@ document.getElementById('register-form')?.addEventListener('submit', async (e) =
   if (errorEl) errorEl.style.display = 'none';
 
   try {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { name } }
@@ -967,6 +1093,13 @@ document.getElementById('register-form')?.addEventListener('submit', async (e) =
         errorEl.style.display = 'block';
       }
     } else {
+      // Set userProfile.id immediately from signUp response so the onboarding
+      // upsert has a valid user_id before onAuthStateChange fires asynchronously.
+      if (data?.user) {
+        userProfile.id = data.user.id;
+        userProfile.email = data.user.email;
+        userProfile.name = data.user.user_metadata?.name || name;
+      }
       showOnboarding();
     }
   } catch (err) {
@@ -980,9 +1113,8 @@ document.getElementById('register-form')?.addEventListener('submit', async (e) =
 // Logout Listener
 document.getElementById('btn-logout')?.addEventListener('click', async () => {
   isDemo = false;
-  userProfile.id = null;
   await supabase.auth.signOut();
-  window.location.reload();
+  // onAuthStateChange SIGNED_OUT resets userProfile and calls showLogin()
 });
 
 // Financial Listeners
@@ -997,7 +1129,8 @@ document.getElementById('send-money-form')?.addEventListener('submit', (e) => {
   e.preventDefault();
   const email = document.getElementById('send-email').value;
   const amount = parseFloat(document.getElementById('send-amount').value);
-  sendMoney(email, amount);
+  const category = document.getElementById('send-category').value;
+  sendMoney(email, amount, category);
 });
 
 document.getElementById('save-money-form')?.addEventListener('submit', (e) => {
@@ -1016,7 +1149,16 @@ document.getElementById('btn-add-money')?.addEventListener('click', () => openMo
 document.getElementById('btn-send-money')?.addEventListener('click', () => openModal('send'));
 document.getElementById('btn-scan-qr')?.addEventListener('click', () => openModal('qr'));
 document.getElementById('btn-save-in-detail')?.addEventListener('click', () => openModal('save'));
-document.getElementById('btn-withdraw-detail')?.addEventListener('click', () => openModal('withdraw'));
+document.getElementById('btn-withdraw-detail')?.addEventListener('click', () => {
+  const balanceEl = document.getElementById('withdraw-jar-balance');
+  if (balanceEl) balanceEl.textContent = `Available: RM ${userProfile.saving_balance.toFixed(2)}`;
+  const input = document.getElementById('withdraw-amount');
+  if (input) {
+    input.value = '';
+    input.max = userProfile.saving_balance;
+  }
+  openModal('withdraw');
+});
 document.getElementById('btn-confirm-withdraw-yes')?.addEventListener('click', processWithdraw);
 
 document.querySelectorAll('.close-modal').forEach(btn => {
@@ -1080,20 +1222,34 @@ document.getElementById('onboarding-form')?.addEventListener('submit', async (e)
     others: spent * 0.2
   };
 
-  // Sync the newly collected profile data to Supabase
-  if (!isDemo && userProfile.id) {
-    await supabase.from('profiles').upsert({
-      id: userProfile.id,
-      name: userProfile.name,
-      email: userProfile.email,
-      balance: 0,
-      saving_balance: 0,
-      streak: 0,
-      age_range: ageVal,
-      monthly_income: salaryVal,
-      savings_goal: savingsTarget
-    });
-  };
+  if (isDemo) {
+    routeTo('home');
+    return;
+  }
+
+  if (!userProfile.id) {
+    alert('Session expired. Please log in again.');
+    showLogin();
+    return;
+  }
+
+  const { error } = await supabase.from('profiles').upsert({
+    id: userProfile.id,
+    name: userProfile.name,
+    email: userProfile.email,
+    balance: 0,
+    saving_balance: 0,
+    streak: 0,
+    age_range: ageVal,
+    monthly_income: salaryVal,
+    savings_goal: savingsTarget
+  });
+
+  if (error) {
+    alert('Could not save your profile. Please try again.\n\nError: ' + error.message);
+    return;
+  }
+
   routeTo('home');
 });
 
