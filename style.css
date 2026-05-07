@@ -1049,10 +1049,7 @@ body {
   }
 
   .col-left, .col-main, .col-right {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    gap: 1.5rem;
+    display: contents;
   }
 
   /* Auto-align nested balance details on mobile */
