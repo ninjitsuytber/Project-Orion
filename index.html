@@ -70,14 +70,7 @@
             <option value="31_40">31 - 40</option>
             <option value="above_40">Above 40</option>
           </select>
-          <select id="onboarding-salary" class="auth-input" required style="appearance: none; background: rgba(0,0,0,0.2);">
-            <option value="" disabled selected>Select Monthly Salary</option>
-            <option value="2000">Under RM 2,000</option>
-            <option value="3000">RM 2,000 - RM 4,000</option>
-            <option value="5000">RM 4,001 - RM 6,000</option>
-            <option value="7000">RM 6,001 - RM 8,000</option>
-            <option value="10000">Above RM 8,000</option>
-          </select>
+          <input type="number" id="onboarding-salary" class="auth-input" placeholder="Exact Monthly Salary (RM)" min="1" step="0.01" required>
           <button type="submit" class="auth-btn">Complete Setup</button>
         </form>
       </div>
@@ -614,39 +607,52 @@
           <div class="financial-details-grid">
             <!-- Spending Detail -->
             <div class="detail-card">
-              <h2 class="section-heading">Detailed Spendings</h2>
+              <h2 class="section-heading">Detailed Daily Spendings</h2>
               <div class="spending-analysis">
-                <div class="progress-ring-v2 large">
+                <div class="progress-ring-v2 large multi-ring">
                   <svg width="180" height="180">
                     <circle class="ring-bg" cx="90" cy="90" r="82"></circle>
-                    <circle class="ring-fill" id="detail-spending-ring-fill" cx="90" cy="90" r="82"></circle>
+                    <circle class="ring-fill ring-food" id="ring-fill-food" cx="90" cy="90" r="82"></circle>
+                    
+                    <circle class="ring-bg" cx="90" cy="90" r="66"></circle>
+                    <circle class="ring-fill ring-transport" id="ring-fill-transport" cx="90" cy="90" r="66"></circle>
+                    
+                    <circle class="ring-bg" cx="90" cy="90" r="50"></circle>
+                    <circle class="ring-fill ring-grocery" id="ring-fill-grocery" cx="90" cy="90" r="50"></circle>
+                    
+                    <circle class="ring-bg" cx="90" cy="90" r="34"></circle>
+                    <circle class="ring-fill ring-others" id="ring-fill-others" cx="90" cy="90" r="34"></circle>
                   </svg>
-                  <div class="ring-content">
-                    <span class="spent-pct" id="detail-spent-pct">0%</span>
-                    <span class="spent-label">Used</span>
-                  </div>
                 </div>
                 <div class="spending-breakdown" id="category-spendings-container">
                   <div class="breakdown-item">
-                    <span class="label">Food & Dining</span>
+                    <span class="label" style="display:flex; align-items:center; gap:6px;">
+                      <span style="width:8px; height:8px; border-radius:50%; background:#3482C6;"></span> Food & Dining
+                    </span>
                     <span class="val">RM <span id="cat-food-left">0.00</span> / <span id="cat-food-total" style="color: var(--text-secondary); font-size: 0.85em;">0.00</span></span>
                   </div>
                   <div class="breakdown-item">
-                    <span class="label">Transport</span>
+                    <span class="label" style="display:flex; align-items:center; gap:6px;">
+                      <span style="width:8px; height:8px; border-radius:50%; background:#1E9454;"></span> Transport
+                    </span>
                     <span class="val">RM <span id="cat-transport-left">0.00</span> / <span id="cat-transport-total" style="color: var(--text-secondary); font-size: 0.85em;">0.00</span></span>
                   </div>
                   <div class="breakdown-item">
-                    <span class="label">Grocery</span>
+                    <span class="label" style="display:flex; align-items:center; gap:6px;">
+                      <span style="width:8px; height:8px; border-radius:50%; background:#C73B4C;"></span> Grocery
+                    </span>
                     <span class="val">RM <span id="cat-grocery-left">0.00</span> / <span id="cat-grocery-total" style="color: var(--text-secondary); font-size: 0.85em;">0.00</span></span>
                   </div>
-                  <div class="breakdown-item border-top">
-                    <span class="label">Entertainment & Others</span>
+                  <div class="breakdown-item">
+                    <span class="label" style="display:flex; align-items:center; gap:6px;">
+                      <span style="width:8px; height:8px; border-radius:50%; background:#E28735;"></span> Ent. & Others
+                    </span>
                     <span class="val">RM <span id="cat-others-left">0.00</span> / <span id="cat-others-total" style="color: var(--text-secondary); font-size: 0.85em;">0.00</span></span>
                   </div>
                 </div>
               </div>
               <div class="chart-placeholder">
-                <span class="placeholder-text">Weekly Spending Trend Graph</span>
+                <span class="placeholder-text">Daily Spending Trend Graph</span>
                 <div class="mini-bar-chart">
                   <div class="bar" style="height: 40%"></div>
                   <div class="bar" style="height: 60%"></div>
@@ -747,7 +753,7 @@
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </div>
-              <div class="list-row list-row--clickable">
+              <div class="list-row list-row--clickable" id="btn-spending-limit-trigger">
                 <div class="list-icon-wrap">
                   <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
@@ -962,15 +968,21 @@
           <option value="31_40">31 - 40</option>
           <option value="above_40">Above 40</option>
         </select>
-        <select id="update-salary" class="auth-input" required style="appearance: none; background: rgba(0,0,0,0.2);">
-          <option value="" disabled selected>Select Monthly Salary</option>
-          <option value="2000">Under RM 2,000</option>
-          <option value="3000">RM 2,000 - RM 4,000</option>
-          <option value="5000">RM 4,001 - RM 6,000</option>
-          <option value="7000">RM 6,001 - RM 8,000</option>
-          <option value="10000">Above RM 8,000</option>
-        </select>
+        <input type="number" id="update-salary" class="auth-input" placeholder="Exact Monthly Salary (RM)" min="1" step="0.01" required>
         <button type="submit" class="auth-btn">Save Changes</button>
+        <button type="button" class="auth-btn secondary-btn close-modal" style="background: var(--bg-panel-light); margin-top: 8px;">Cancel</button>
+      </form>
+    </div>
+
+    <!-- Customize Daily Spending Limit Modal -->
+    <div id="modal-spending-limit" class="modal-content auth-box" style="display: none;">
+      <h2>Set Daily Limit</h2>
+      <form id="spending-limit-form" class="auth-form">
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+          How much do you want to allow yourself to spend each day?
+        </p>
+        <input type="number" id="input-daily-limit" class="auth-input" placeholder="Amount (RM)" step="0.01" min="1" required>
+        <button type="submit" class="auth-btn">Update Limit</button>
         <button type="button" class="auth-btn secondary-btn close-modal" style="background: var(--bg-panel-light); margin-top: 8px;">Cancel</button>
       </form>
     </div>

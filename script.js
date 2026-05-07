@@ -333,6 +333,7 @@ const modals = {
   etf: document.getElementById('modal-discover-etf'),
   goal: document.getElementById('modal-edit-goal'),
   financials: document.getElementById('modal-update-financials'),
+  limit: document.getElementById('modal-spending-limit'),
 };
 
 // App State
@@ -455,6 +456,7 @@ async function syncUserData() {
       userProfile.savings_goal = Number(profile.savings_goal) || 300;
       userProfile.monthly_income = Number(profile.monthly_income) || 0;
       userProfile.age_range = profile.age_range || '';
+      userProfile.daily_spending_limit = Number(profile.daily_spending_limit) || 0;
       if (userProfile.monthly_income > 0) {
         const dailyLimit = Math.max(0, (userProfile.monthly_income - (userProfile.savings_goal || userProfile.monthly_income * 0.2)) / 30);
         userProfile.daily_spending_limit = dailyLimit;
@@ -686,7 +688,7 @@ function updateDailySpendingsUI() {
   
   // Calculate total monthly spending allowance, then divide by 30 days
   const monthlyAllowance = salary - savingsGoal;
-  const globalDailyLimit = Math.max(0, monthlyAllowance / 30);
+  const globalDailyLimit = userProfile.daily_spending_limit || ((userProfile.monthly_income - userProfile.savings_goal) / 30);
   
   // Calculate Ring Progress based on daily limit
   const spentPercentage = globalDailyLimit > 0 
@@ -694,13 +696,19 @@ function updateDailySpendingsUI() {
     : 0;
 
   updateText('detail-spent-pct', `${Math.round(spentPercentage)}%`);
-  setRingProgress('detail-spending-ring-fill', 82, spentPercentage);
 
   const dailyCatLimits = {
     food:      globalDailyLimit * 0.35,
     transport: globalDailyLimit * 0.20,
     grocery:   globalDailyLimit * 0.25,
     others:    globalDailyLimit * 0.20
+  };
+
+  const ringRadii = {
+    food: 82,
+    transport: 66,
+    grocery: 50,
+    others: 34
   };
 
   const cats = ['food', 'transport', 'grocery', 'others'];
@@ -710,6 +718,9 @@ function updateDailySpendingsUI() {
 
     updateText(`cat-${cat}-left`, spent.toFixed(2));
     updateText(`cat-${cat}-total`, limit.toFixed(2));
+
+    const catPct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
+    setRingProgress(`ring-fill-${cat}`, ringRadii[cat], catPct);
   });
 }
 
@@ -771,7 +782,7 @@ function updateBalanceUI() {
 
 function updateSpendingRing() {
   const monthlyBudget = userProfile.monthly_income - userProfile.savings_goal;
-  const dailyLimit = monthlyBudget / 30;
+  const dailyLimit = userProfile.daily_spending_limit || ((userProfile.monthly_income - userProfile.savings_goal) / 30);
   const remainingToday = Math.max(0, dailyLimit - userProfile.spent_today);
   const spentPercentage = Math.min(100, (userProfile.spent_today / dailyLimit) * 100);
 
@@ -1561,6 +1572,12 @@ document.getElementById('onboarding-form')?.addEventListener('submit', async (e)
   const ageVal = document.getElementById('onboarding-age').value;
   const salaryVal = parseInt(document.getElementById('onboarding-salary').value);
 
+  // Error handling for 0 or negative numbers
+  if (isNaN(salaryVal) || salaryVal <= 0) {
+    alert('Please enter a valid monthly salary greater than RM 0.');
+    return;
+  }
+
   // Financial Rule
   const savingsTarget = salaryVal * 0.20;
   const dailyLimit = Math.max(0, (salaryVal - savingsTarget) / 30);
@@ -1624,17 +1641,22 @@ document.getElementById('update-financials-form')?.addEventListener('submit', as
   e.preventDefault();
   const ageVal = document.getElementById('update-age').value;
   const salaryVal = parseInt(document.getElementById('update-salary').value);
+  if (isNaN(salaryVal) || salaryVal <= 0) {
+    alert('Please enter a valid monthly salary greater than RM 0.');
+    return;
+  }
   const savingsTarget = salaryVal * 0.20;
-  const dailyLimit = Math.max(0, (salaryVal - savingsTarget) / 30);
+  const newDefaultDailyLimit = Math.max(0, (salaryVal - savingsTarget) / 30);
 
   userProfile.age_range = ageVal;
   userProfile.monthly_income = salaryVal;
   userProfile.savings_goal = savingsTarget;
+  userProfile.daily_spending_limit = newDefaultDailyLimit;
   userProfile.category_budgets = {
-    food:      dailyLimit * 0.35,
-    transport: dailyLimit * 0.20,
-    grocery:   dailyLimit * 0.25,
-    others:    dailyLimit * 0.20
+    food:      newDefaultDailyLimit * 0.35,
+    transport: newDefaultDailyLimit * 0.20,
+    grocery:   newDefaultDailyLimit * 0.25,
+    others:    newDefaultDailyLimit * 0.20
   };
 
   if (!isDemo && userProfile.id) {
@@ -1642,7 +1664,7 @@ document.getElementById('update-financials-form')?.addEventListener('submit', as
       age_range: ageVal,
       monthly_income: salaryVal,
       savings_goal: savingsTarget,
-      daily_spending_limit: dailyLimit
+      daily_spending_limit: newDefaultDailyLimit
     }).eq('id', userProfile.id);
 
     if (error) {
@@ -1654,6 +1676,48 @@ document.getElementById('update-financials-form')?.addEventListener('submit', as
   updateDashboard();
   closeModal();
   alert('Your financial profile has been updated!');
+});
+
+document.querySelector('.list-row--clickable[id="btn-spending-limit-trigger"]')?.addEventListener('click', () => {
+  const currentLimit = userProfile.daily_spending_limit || ((userProfile.monthly_income - userProfile.savings_goal) / 30);
+  
+  const inputEl = document.getElementById('input-daily-limit');
+  if (inputEl) {
+    inputEl.value = currentLimit > 0 ? currentLimit.toFixed(2) : "";
+  }
+  
+  openModal('limit');
+});
+
+document.getElementById('spending-limit-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const newLimit = parseFloat(document.getElementById('input-daily-limit').value);
+
+  if (newLimit > 0) {
+    userProfile.daily_spending_limit = newLimit;
+    userProfile.category_budgets = {
+      food:      newLimit * 0.35,
+      transport: newLimit * 0.20,
+      grocery:   newLimit * 0.25,
+      others:    newLimit * 0.20
+    };
+
+    if (!isDemo && userProfile.id) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ daily_spending_limit: newLimit })
+        .eq('id', userProfile.id);
+
+      if (error) {
+        alert('Error updating limit: ' + error.message);
+        return;
+      }
+    }
+
+    updateDashboard();
+    closeModal();
+    alert('Daily spending limit updated to RM ' + newLimit.toFixed(2));
+  }
 });
 
 document.addEventListener('visibilitychange', () => {
