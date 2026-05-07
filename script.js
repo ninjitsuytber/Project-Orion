@@ -893,6 +893,8 @@ function showRegister() {
 
 function initActivityTabs() {
   const tabs = document.querySelectorAll('.activity-tab');
+
+
   tabs.forEach(tab => {
     const newTab = tab.cloneNode(true);
     tab.parentNode.replaceChild(newTab, tab);
@@ -919,20 +921,39 @@ function initWaveAnimation(selector) {
 
     const ctx = canvas.getContext('2d');
 
+    const monthlyBudget = userProfile.monthly_income - userProfile.savings_goal;
+    const dailyLimit = monthlyBudget / 30;
+    const remainingToday = Math.max(0, dailyLimit - userProfile.spent_today);
+    const spentPercentage = Math.min(100, (userProfile.spent_today / dailyLimit) * 100);
+    const verticalBaseline = canvas.height * (1-(spentPercentage/100)); 
+    let color="#ffffff";
+
+
+    if (spentPercentage>=67 && spentPercentage<=100){
+      color='#43f6ff'
+    }
+    else if (spentPercentage>=33 && spentPercentage<=66){
+      color='#fdf111'
+    }
+    else{
+      color='#ff9292'
+    };
+
     const params = {
-        AMPLITUDE_WAVES: 25,
-        AMPLITUDE_MIDDLE: 15,
+        AMPLITUDE_WAVES: 5,
+        AMPLITUDE_MIDDLE: 5,
         AMPLITUDE_SIDES: 15,
         OFFSET_SPEED: 100,
-        SPEED: 1.2,
-        OFFSET_WAVES: 35,
+        SPEED: 10,
+        OFFSET_WAVES: 60,
         NUMBER_WAVES: 3,
-        COLOR: '#032bac',
-        NUMBER_CURVES: 2,
+        COLOR: color,
+        NUMBER_CURVES: 4,
         OFFSET_CURVE: true
     };
 
-    const wavesOpacities = [0.6, 0.4, 0.25]; 
+
+    const wavesOpacities = [0.3, 0.2, 0.1]; 
     let speedInc = 0;
     let gradient;
 
@@ -952,13 +973,14 @@ function initWaveAnimation(selector) {
         let rgb = hexToRgb(params.COLOR);
         gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
         gradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
-        gradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.9)`);
+        gradient.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3)`);
     };
 
     const render = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const verticalBaseline = canvas.height * 0.55; 
+
+
 
         for (let j = params.NUMBER_WAVES - 1; j >= 0; j--) {
             let offset = speedInc + j * Math.PI * params.OFFSET_WAVES;
@@ -1014,6 +1036,10 @@ function initWaveAnimation(selector) {
         speedInc += params.SPEED;
         requestAnimationFrame(render);
     };
+
+    /*Height of the wave*/
+    /*const waveHeight=document.querySelector('.wave-canvas');
+    waveHeight.style.setProperty('--height', spentPercentage);*/
 
     window.addEventListener('resize', resize);
     resize();
