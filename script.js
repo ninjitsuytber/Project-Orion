@@ -457,6 +457,7 @@ async function syncUserData() {
       userProfile.age_range = profile.age_range || '';
       if (userProfile.monthly_income > 0) {
         const dailyLimit = Math.max(0, (userProfile.monthly_income - (userProfile.savings_goal || userProfile.monthly_income * 0.2)) / 30);
+        userProfile.daily_spending_limit = dailyLimit;
         userProfile.category_budgets = {
           food:      dailyLimit * 0.35,
           transport: dailyLimit * 0.20,
@@ -596,7 +597,8 @@ async function syncUserData() {
       .order('created_at', { ascending: false })
       .limit(10);
 
-    renderTransactions(transactions || []);
+    userProfile.transactions = transactions || [];
+    renderTransactions(userProfile.transactions);
 
     // 6. Fetch App Activities
     const { data: activities } = await supabase
@@ -1666,10 +1668,28 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
 
 async function fetchNotice() {
   if (!BACKEND_URL || !userProfile.id) return;
-  const recentTx = (userProfile.transactions || []).slice(0, 3)
-    .map(t => `${t.type} RM ${parseFloat(t.amount).toFixed(2)} (${t.description || ''})`)
+
+  const recentTx = (userProfile.transactions || []).slice(0, 5)
+    .filter(t => ['send', 'save', 'withdraw', 'add'].includes(t.type))
+    .map(t => {
+      const desc = t.description ? ` (${t.description})` : '';
+      return `${t.type} RM ${parseFloat(t.amount).toFixed(2)}${desc}`;
+    })
+    .join('; ');
+
+  const cs = userProfile.category_spent || {};
+  const categoryDetail = Object.entries(cs)
+    .filter(([, v]) => v > 0)
+    .map(([k, v]) => `${k} RM ${v.toFixed(2)}`)
     .join(', ');
-  const activity = recentTx || 'no recent transactions';
+
+  const parts = [];
+  if (recentTx) parts.push(`Recent: ${recentTx}`);
+  if (categoryDetail) parts.push(`Spent today by category: ${categoryDetail}`);
+  if (userProfile.saved_today > 0) parts.push(`Saved today: RM ${userProfile.saved_today.toFixed(2)}`);
+  if (userProfile.streak > 0) parts.push(`Saving streak: ${userProfile.streak} days`);
+  const activity = parts.join('. ') || 'no recent activity';
+
   try {
     const res = await fetch(`${BACKEND_URL}/notice`, {
       method: 'POST',
@@ -1677,14 +1697,17 @@ async function fetchNotice() {
       body: JSON.stringify({
         recent_activity: activity,
         daily_limit: userProfile.daily_spending_limit || 0,
-        total_spent_today: Object.values(userProfile.category_spent || {}).reduce((a, b) => a + b, 0),
+        total_spent_today: Object.values(cs).reduce((a, b) => a + b, 0),
       }),
     });
-    if (!res.ok) return;
+    if (!res.ok) {
+      console.warn('[Orion AI] notice fetch failed:', res.status, await res.text());
+      return;
+    }
     const data = await res.json();
     if (data.notice) updateText('notice-bar-text', data.notice);
-  } catch (_) {
-    // silently fail — notice bar keeps its last text
+  } catch (err) {
+    console.warn('[Orion AI] notice error:', err);
   }
 }
 
@@ -1753,12 +1776,19 @@ async function sendChatMessage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: _chatHistory, context: _chatContext }),
     });
-    const data = await res.json();
-    const reply = data.reply || 'Hmm, cannot think right now. Try again lah!';
-    appendChatMessage('ai', reply);
-    _chatHistory.push({ role: 'assistant', content: reply });
-  } catch (_) {
-    appendChatMessage('ai', 'Network problem lah! Check your connection.');
+    if (!res.ok) {
+      const errText = await res.text();
+      console.warn('[Orion AI] chat error:', res.status, errText);
+      appendChatMessage('ai', 'Aiyah, something went wrong on my end. Try again lah!');
+    } else {
+      const data = await res.json();
+      const reply = data.reply || 'Hmm, cannot think right now. Try again lah!';
+      appendChatMessage('ai', reply);
+      _chatHistory.push({ role: 'assistant', content: reply });
+    }
+  } catch (err) {
+    console.warn('[Orion AI] chat fetch error:', err);
+    appendChatMessage('ai', 'Cannot reach the server lah! Make sure backend is running.');
   } finally {
     if (sendBtn) sendBtn.disabled = false;
   }

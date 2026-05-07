@@ -1,11 +1,15 @@
 import os
 import httpx
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
 load_dotenv()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("orion-ai")
 
 app = FastAPI()
 
@@ -16,19 +20,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-ILMU_API_KEY = os.getenv("ILMU_API_KEY", "")
-ILMU_API_BASE = os.getenv("ILMU_API_BASE", "https://api.ilmu-ai.my/v1")
-ILMU_MODEL = os.getenv("ILMU_MODEL", "ilmu-1")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/openai"
 
-SYSTEM_PROMPT = """You are Orion's AI financial assistant with an Asian Parent personality.
-You care deeply about the user's financial wellbeing, like a strict but loving parent who hates wasteful spending.
-You are direct, slightly naggy, but always warm and want the best for the user.
-You speak in a mix of relatable, mildly scolding yet encouraging tone.
-Keep all responses concise and practical. Never use harsh or hurtful language."""
+SYSTEM_PROMPT = """\
+You are Orion, a financial assistant with an Asian Parent personality.
+You care deeply about the user's financial wellbeing — like a strict but loving parent who hates wasteful spending.
+You are direct, occasionally naggy, but always warm and want the best for the user.
+You teach and guide the user toward positive financial habits without being harsh or discouraging.
+Speak naturally and conversationally. Keep responses concise (2-4 sentences max).
+Use simple English. You may occasionally add "lah", "aiyah", or "wah" for character, but don't overdo it."""
 
-NOTICE_SYSTEM_PROMPT = """You are an Asian Parent financial assistant for a money app.
-Based on the user's recent financial activity, generate ONE short sentence (max 12 words) as a nudge or comment.
-Be like a concerned Asian parent — direct, slightly naggy, but caring. No emojis. No quotation marks. Just the sentence."""
+NOTICE_SYSTEM_PROMPT = """\
+You are an Asian Parent financial assistant for a money app.
+Based on the user's recent financial activity, write ONE short sentence (max 12 words) as a nudge or comment.
+Be like a concerned Asian parent — direct, slightly naggy, but warm and caring.
+No emojis. No quotation marks. Output only the sentence, nothing else."""
 
 
 class NoticeRequest(BaseModel):
@@ -47,33 +55,48 @@ class ChatRequest(BaseModel):
     context: str = ""
 
 
-async def call_ilmu(messages: list[dict]) -> str:
+async def call_gemini(messages: list[dict], max_tokens: int = 200) -> str:
+    if not GOOGLE_API_KEY:
+        raise ValueError("GOOGLE_API_KEY is not set")
+
     headers = {
-        "Authorization": f"Bearer {ILMU_API_KEY}",
+        "Authorization": f"Bearer {GOOGLE_API_KEY}",
         "Content-Type": "application/json",
     }
     payload = {
-        "model": ILMU_MODEL,
+        "model": GEMINI_MODEL,
         "messages": messages,
-        "max_tokens": 300,
-        "temperature": 0.7,
+        "max_tokens": max_tokens,
+        "temperature": 0.75,
     }
-    async with httpx.AsyncClient(timeout=20) as client:
-        resp = await client.post(f"{ILMU_API_BASE}/chat/completions", headers=headers, json=payload)
-        resp.raise_for_status()
+
+    url = f"{GEMINI_BASE}/chat/completions"
+    logger.info("Calling Gemini: %s | model=%s | messages=%d", url, GEMINI_MODEL, len(messages))
+
+    async with httpx.AsyncClient(timeout=25) as client:
+        resp = await client.post(url, headers=headers, json=payload)
+        logger.info("Gemini response status: %s", resp.status_code)
+        if resp.status_code != 200:
+            logger.error("Gemini error body: %s", resp.text)
+            resp.raise_for_status()
         data = resp.json()
+
+    try:
         return data["choices"][0]["message"]["content"].strip()
+    except (KeyError, IndexError) as e:
+        logger.error("Unexpected Gemini response format: %s", data)
+        raise ValueError(f"Unexpected response format: {e}") from e
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "model": GEMINI_MODEL}
 
 
 @app.post("/notice")
 async def get_notice(req: NoticeRequest):
     user_msg = (
-        f"Recent activity: {req.recent_activity}. "
+        f"User financial activity: {req.recent_activity}. "
         f"Daily spending limit: RM {req.daily_limit:.2f}. "
         f"Total spent today: RM {req.total_spent_today:.2f}."
     )
@@ -82,9 +105,11 @@ async def get_notice(req: NoticeRequest):
         {"role": "user", "content": user_msg},
     ]
     try:
-        sentence = await call_ilmu(messages)
+        sentence = await call_gemini(messages, max_tokens=60)
+        logger.info("Notice generated: %s", sentence)
         return {"notice": sentence}
     except Exception as e:
+        logger.error("Notice generation failed: %s", e)
         return {"notice": "Eh, remember to spend wisely today!", "error": str(e)}
 
 
@@ -92,14 +117,16 @@ async def get_notice(req: NoticeRequest):
 async def chat(req: ChatRequest):
     system = SYSTEM_PROMPT
     if req.context:
-        system += f"\n\nUser's financial context: {req.context}"
+        system += f"\n\nUser's current financial snapshot: {req.context}"
 
     messages = [{"role": "system", "content": system}]
     for m in req.messages:
         messages.append({"role": m.role, "content": m.content})
 
     try:
-        reply = await call_ilmu(messages)
+        reply = await call_gemini(messages, max_tokens=300)
+        logger.info("Chat reply generated (%d chars)", len(reply))
         return {"reply": reply}
     except Exception as e:
+        logger.error("Chat generation failed: %s", e)
         return {"reply": "Aiyah, something went wrong. Try again lah!", "error": str(e)}

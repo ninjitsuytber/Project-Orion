@@ -8,4 +8,4 @@ dist/
 .vscode/
 .idea/
 *.log
-.claude/
+__pycache__/
