@@ -1955,6 +1955,91 @@ document.getElementById('ai-chat-overlay')?.addEventListener('click', e => {
   if (e.target === e.currentTarget) closeChat();
 });
 
+function initCustomSelects() {
+  const proto = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+
+  document.querySelectorAll('select.auth-input').forEach(sel => {
+    if (sel.dataset.customInit) return;
+    sel.dataset.customInit = '1';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-select-wrapper';
+    sel.parentNode.insertBefore(wrapper, sel);
+    wrapper.appendChild(sel);
+    sel.style.cssText = 'position:absolute;opacity:0;pointer-events:none;width:0;height:0;';
+
+    const trigger = document.createElement('div');
+    trigger.className = 'custom-select-trigger';
+    trigger.setAttribute('tabindex', '0');
+    wrapper.appendChild(trigger);
+
+    const panel = document.createElement('div');
+    panel.className = 'custom-select-options';
+    panel.addEventListener('click', e => e.stopPropagation());
+    wrapper.appendChild(panel);
+
+    function syncDisplay() {
+      const idx = sel.selectedIndex;
+      const opt = idx >= 0 ? sel.options[idx] : null;
+      const isPlaceholder = !opt || !opt.value;
+      const text = isPlaceholder
+        ? (sel.querySelector('option[disabled]')?.textContent.trim() || 'Select...')
+        : opt.textContent.trim();
+      trigger.innerHTML = `<span class="custom-select-value${isPlaceholder ? ' placeholder' : ''}">${text}</span><span class="custom-select-arrow"></span>`;
+    }
+
+    function buildOptionsList() {
+      panel.innerHTML = '';
+      Array.from(sel.options).forEach(opt => {
+        if (opt.disabled) return;
+        const item = document.createElement('div');
+        item.className = 'custom-select-option' + (opt.value === sel.value ? ' selected' : '');
+        item.textContent = opt.textContent.trim();
+        item.addEventListener('click', () => {
+          sel.value = opt.value;
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+          wrapper.classList.remove('open');
+        });
+        panel.appendChild(item);
+      });
+    }
+
+    syncDisplay();
+    buildOptionsList();
+
+    trigger.addEventListener('click', e => {
+      e.stopPropagation();
+      const isOpen = wrapper.classList.contains('open');
+      document.querySelectorAll('.custom-select-wrapper.open').forEach(w => w.classList.remove('open'));
+      if (!isOpen) {
+        buildOptionsList();
+        wrapper.classList.add('open');
+      }
+    });
+
+    trigger.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); trigger.click(); }
+      if (e.key === 'Escape') wrapper.classList.remove('open');
+    });
+
+    Object.defineProperty(sel, 'value', {
+      get() { return proto.get.call(this); },
+      set(v) {
+        proto.set.call(this, v);
+        syncDisplay();
+        buildOptionsList();
+      },
+      configurable: true
+    });
+  });
+
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.custom-select-wrapper.open').forEach(w => w.classList.remove('open'));
+  });
+}
+
+initCustomSelects();
+
 const minDelay = new Promise(resolve => setTimeout(resolve, 1500));
 Promise.all([renderApp(), minDelay]).then(() => {
   const screen = document.getElementById('loading-screen');
