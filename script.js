@@ -117,6 +117,11 @@ const BADGE_ASSETS = {
 
 };
 
+function getHighestUnlockedBadge() {
+  const unlocked = BADGES.filter(b => userProfile.badges.includes(b.id));
+  return unlocked.length > 0 ? unlocked[unlocked.length - 1] : BADGES[0];
+}
+
 //Show 3 badges: current tier badge in center, previous and next tier badges on sides (if they exist)
 function renderBadgePreview() {
   const container = document.getElementById("badge-preview-row");
@@ -124,7 +129,7 @@ function renderBadgePreview() {
 
   container.innerHTML = "";
 
-  const currentTier = userProfile.tier;
+  const currentTier = getHighestUnlockedBadge().tierRequired;
 
   const prevBadge = BADGES.find(b => b.tierRequired === currentTier - 1);
   const currBadge = BADGES.find(b => b.tierRequired === currentTier);
@@ -134,7 +139,7 @@ function renderBadgePreview() {
 
   preview.forEach(badge => {
 
-    const unlocked = calculateTier(userProfile.xp) >= badge.tierRequired;
+    const unlocked = userProfile.badges.includes(badge.id);
 
     const asset = BADGE_ASSETS[badge.id];
     if (!asset) return;
@@ -270,20 +275,14 @@ async function addXP(amount, reason = "") {
   }
 
   try {
-    // 1. Update Progress
+    // 1. Update Progress (trigger on user_progress syncs profiles.xp automatically)
     await supabase.from('user_progress').upsert({
       user_id: userProfile.id,
       xp: userProfile.xp,
       tier: newTier
     });
 
-    // 2. Mirror XP in profiles table
-    await supabase
-      .from('profiles')
-      .update({ xp: userProfile.xp })
-      .eq('id', userProfile.id);
-
-    // 3. Insert new badges
+    // 2. Insert new badges
     for (const badge of unlockedBadges) {
       await supabase
         .from('user_badges')
@@ -296,7 +295,7 @@ async function addXP(amount, reason = "") {
         );
     }
 
-    // 4. Log activity
+    // 3. Log activity
     await supabase.from('app_activities').insert([{
       user_id: userProfile.id,
       activity_name: reason,
@@ -449,8 +448,9 @@ async function checkOnboardingAndRoute() {
 
     // age_range is NULL/empty until the onboarding form is submitted
     if (profile && profile.age_range) {
-      routeTo('home');
+      await syncUserData();
       await checkDailyLoginBonus();
+      routeTo('home');
     } else {
       showOnboarding();
     }
@@ -778,8 +778,7 @@ function updateRewardsUI() {
   updateText('rw-streak-val', `${userProfile.streak} Days`);
   updateText('rw-total-xp', `${userProfile.xp} XP`);
 
-  const currentBadge = BADGES.find(b => b.tierRequired === userProfile.tier)
-    || BADGES[0];
+  const currentBadge = getHighestUnlockedBadge();
 
   const asset = BADGE_ASSETS[currentBadge.id];
   const badgeImg = document.getElementById('rw-current-badge-img');
@@ -1198,7 +1197,7 @@ async function updateProfile() {
   if (nameEl) nameEl.textContent = userProfile.name;
   if (emailEl) emailEl.textContent = userProfile.email;
 
-  const currentBadge = BADGES.find(b => b.tierRequired === userProfile.tier) || BADGES[0];
+  const currentBadge = getHighestUnlockedBadge();
   const badgeImg = document.getElementById('profile-badge-img');
   const badgeName = document.getElementById('profile-badge-name');
 
@@ -1208,7 +1207,7 @@ async function updateProfile() {
   }
   if (badgeName) badgeName.textContent = currentBadge.name;
 
-  const theme = BADGE_THEMES.find(t => t.tier === userProfile.tier) || BADGE_THEMES[0];
+  const theme = BADGE_THEMES.find(t => t.tier === currentBadge.tierRequired) || BADGE_THEMES[0];
   const container = document.getElementById('profile-badge-container');
   if (container) {
     container.style.background = theme.bg;
