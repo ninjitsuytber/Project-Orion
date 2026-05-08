@@ -22,6 +22,46 @@ const navItems = {
   me: document.getElementById('nav-me'),
 };
 
+document.addEventListener('DOMContentLoaded', () => {
+  setupCustomDropdown('onboarding-age-wrapper', 'onboarding-age');
+  setupCustomDropdown('update-age-wrapper', 'update-age');
+  setupCustomDropdown('send-category-wrapper', 'send-category');
+  setupCustomDropdown('bank-select-wrapper', 'bank-select');
+});
+
+function setupCustomDropdown(wrapperId, inputId) {
+  const wrapper = document.getElementById(wrapperId);
+  if (!wrapper) return;
+
+  const trigger = wrapper.querySelector('.custom-select-trigger');
+  const options = wrapper.querySelectorAll('.custom-option');
+  const hiddenInput = document.getElementById(inputId);
+
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.querySelectorAll('.custom-select-wrapper').forEach(w => {
+      if (w !== wrapper) w.classList.remove('open');
+    });
+    wrapper.classList.toggle('open');
+  });
+
+  options.forEach(option => {
+    option.addEventListener('click', function() {
+      options.forEach(opt => opt.classList.remove('selected'));
+      this.classList.add('selected');
+      trigger.textContent = this.textContent;
+      hiddenInput.value = this.getAttribute('data-value');
+      wrapper.classList.remove('open');
+    });
+  });
+
+  window.addEventListener('click', (e) => {
+    if (!wrapper.contains(e.target)) {
+      wrapper.classList.remove('open');
+    }
+  });
+}
+
 //Tiers
 const TIERS = [
   { tier: 1, name: "No Money No Talk", xpRequired: 0 },
@@ -939,6 +979,13 @@ async function addMoney(amount, bank) {
     bank_name: bank
   });
 
+  const bankWrapper = document.getElementById('bank-select-wrapper');
+  if (bankWrapper) {
+    bankWrapper.querySelector('.custom-select-trigger').textContent = 'Select Bank';
+    bankWrapper.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
+  }
+  document.getElementById('bank-select').value = '';
+
   if (!error && data?.success) {
     await addXP(20, "Account Reloaded");
     updateDashboard();
@@ -988,6 +1035,13 @@ async function sendMoney(email, amount, category) {
 
   const btn = document.querySelector('#send-money-form button[type="submit"]');
   if (btn) btn.disabled = true;
+
+  const categoryWrapper = document.getElementById('send-category-wrapper');
+if (categoryWrapper) {
+  categoryWrapper.querySelector('.custom-select-trigger').textContent = 'Select Category';
+  categoryWrapper.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
+}
+document.getElementById('send-category').value = '';
 
   try {
     const { data, error } = await supabase.rpc('transfer_money', {
@@ -1677,8 +1731,34 @@ document.getElementById('onboarding-form')?.addEventListener('submit', async (e)
 });
 
 document.getElementById('btn-update-financials')?.addEventListener('click', () => {
-  document.getElementById('update-age').value = userProfile.age_range || '';
-  document.getElementById('update-salary').value = userProfile.monthly_income || '';
+  const currentAge = userProfile.age_range || '';
+  
+  // 1. Set the values for the hidden input and salary field
+  const ageInput = document.getElementById('update-age');
+  if (ageInput) ageInput.value = currentAge;
+  
+  const salaryInput = document.getElementById('update-salary');
+  if (salaryInput) salaryInput.value = userProfile.monthly_income || '';
+
+  // 2. Visually update the custom dropdown trigger text
+  const wrapper = document.getElementById('update-age-wrapper');
+  if (wrapper) {
+    const trigger = wrapper.querySelector('.custom-select-trigger');
+    const options = wrapper.querySelectorAll('.custom-option');
+    
+    // Find the option that matches the saved data
+    const selectedOption = wrapper.querySelector(`.custom-option[data-value="${currentAge}"]`);
+    
+    if (currentAge && selectedOption) {
+      trigger.textContent = selectedOption.textContent;
+      options.forEach(opt => opt.classList.remove('selected'));
+      selectedOption.classList.add('selected');
+    } else {
+      trigger.textContent = 'Select Age Range';
+      options.forEach(opt => opt.classList.remove('selected'));
+    }
+  }
+
   openModal('financials');
 });
 
