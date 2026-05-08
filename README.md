@@ -545,7 +545,7 @@ uvicorn main:app --reload --port 8080
 
 1. Open your Supabase project dashboard
 2. Navigate to SQL Editor and create a new query
-3. Paste and run the full contents of `database_schema.sql`
+3. Paste and run the full contents of `database_schema_example.sql`
 
 The script is idempotent and safe to re-run. It creates all tables, indexes, RLS policies, stored functions, and triggers.
 
