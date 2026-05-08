@@ -1,0 +1,22 @@
+{
+  "name": "Project Orion",
+  "short_name": "Orion",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#120424",
+  "theme_color": "#8B1A8B",
+  "icons": [
+    {
+      "src": "./logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
