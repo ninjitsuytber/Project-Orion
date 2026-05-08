@@ -270,10 +270,6 @@ async function addXP(amount, reason = "") {
     }
   }
 
-  if (isDemo) {
-    return { xpAdded: amount, newTier, unlockedBadges };
-  }
-
   try {
     // 1. Update Progress (trigger on user_progress syncs profiles.xp automatically)
     await supabase.from('user_progress').upsert({
@@ -310,7 +306,7 @@ async function addXP(amount, reason = "") {
 }
 
 async function logActivity(activityName) {
-  if (isDemo || !userProfile.id) return;
+  if (!userProfile.id) return;
   try {
     await supabase.from('app_activities').insert([{
       user_id: userProfile.id,
@@ -324,7 +320,7 @@ async function logActivity(activityName) {
 
 // Streak ranks
 async function rankCalc() {
-  if (isDemo || !userProfile.id) return;
+  if (!userProfile.id) return;
   try {
     const { data, error } = await supabase.rpc('get_xp_rank');
     if (error || !data || !data.success) return;
@@ -361,7 +357,6 @@ const modals = {
 
 // App State
 let pendingWithdrawAmount = 0;
-let isDemo = false;
 let isBalanceHidden = false;
 let userProfile = {
   id: null,
@@ -390,7 +385,7 @@ async function renderApp() {
     userProfile.email = session.user.email;
     userProfile.name = session.user.user_metadata.name || 'User';
     await checkOnboardingAndRoute();
-  } else if (!isDemo) {
+  } else {
     showLogin();
   }
 
@@ -410,13 +405,13 @@ async function renderApp() {
         category_budgets: { food: 0, transport: 0, grocery: 0, others: 0 },
         category_spent: { food: 0, transport: 0, grocery: 0, others: 0 }
       });
-      if (!isDemo) showLogin();
+      showLogin();
     }
   });
 }
 
 async function checkDailyLoginBonus() {
-  if (isDemo || !userProfile.id) return;
+  if (!userProfile.id) return;
   try {
     const { data, error } = await supabase.rpc('daily_login_checkin');
     if (error || !data || !data.success) return;
@@ -449,8 +444,6 @@ async function checkDailyLoginBonus() {
 }
 
 async function checkOnboardingAndRoute() {
-  if (isDemo) return;
-
   try {
     const { data: profile } = await supabase
       .from('profiles')
@@ -474,7 +467,6 @@ async function checkOnboardingAndRoute() {
 
 // Data Syncing
 async function syncUserData() {
-  if (isDemo) return;
   if (!userProfile.id) return;
 
   try {
@@ -937,14 +929,6 @@ async function addMoney(amount, bank) {
     alert('Please enter a valid amount greater than zero.');
     return;
   }
-  if (isDemo) {
-    userProfile.balance += amount;
-    await addXP(10, "First Reload");
-    updateDashboard();
-    closeModal();
-    return;
-  }
-
   const { data, error } = await supabase.rpc('add_money', {
     amount: amount,
     bank_name: bank
@@ -986,14 +970,6 @@ async function sendMoney(email, amount, category) {
 
   if (amount > userProfile.balance) {
     showError('send-money-error', `Insufficient balance (Available: RM ${userProfile.balance.toFixed(2)})`);
-    return;
-  }
-
-  if (isDemo) {
-    userProfile.balance -= amount;
-    await addXP(15, "Money Sent (Demo)");
-    await updateDashboard();
-    closeModal();
     return;
   }
 
@@ -1052,17 +1028,6 @@ async function saveMoney(amount) {
     return;
   }
 
-  if (isDemo) {
-    userProfile.balance -= amount;
-    userProfile.saving_balance += amount;
-    userProfile.saved_today += amount;
-    userProfile.streak = Math.max(1, userProfile.streak);
-    await addXP(50, "Saving Goal Progress (Demo)");
-    await updateDashboard();
-    closeModal();
-    return;
-  }
-
   const submitBtn = document.querySelector('#save-money-form [type="submit"]');
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Saving...'; }
 
@@ -1112,16 +1077,6 @@ async function processWithdraw() {
 
   const streakWillReset = userProfile.saved_today > 0 && amount >= userProfile.saved_today;
 
-  if (isDemo) {
-    userProfile.balance += amount;
-    userProfile.saving_balance -= amount;
-    if (streakWillReset) userProfile.streak = 0;
-    await updateDashboard();
-    closeModal();
-    if (streakWillReset) alert('Your streak has been reset because you withdrew all of today\'s savings.');
-    return;
-  }
-
   const confirmBtn = document.getElementById('btn-confirm-withdraw-yes');
   if (confirmBtn) confirmBtn.disabled = true;
 
@@ -1149,12 +1104,6 @@ async function processWithdraw() {
 }
 
 async function updateSavingGoal(newGoal) {
-  if (isDemo) {
-    userProfile.savings_goal = newGoal;
-    updateDashboard();
-    return;
-  }
-
   const { error } = await supabase
     .from('profiles')
     .update({ savings_goal: newGoal })
@@ -1279,9 +1228,7 @@ function initWaveAnimation(selector) {
   canvas.width = container.clientWidth;
   canvas.height = container.clientHeight;
   const ctx = canvas.getContext('2d');
-
-  const monthlyBudget = userProfile.monthly_income - userProfile.savings_goal;
-  const dailyLimit = monthlyBudget / 30;
+  const dailyLimit = userProfile.daily_spending_limit || ((userProfile.monthly_income - userProfile.savings_goal) / 30);
   const remainingToday = dailyLimit - userProfile.spent_today;
   const spentPercentage = Math.min(100, (userProfile.spent_today / dailyLimit) * 100);
   if (spentPercentage > 100) {
@@ -1431,16 +1378,6 @@ navItems.me?.addEventListener('click', () => routeTo('me'));
 
 document.getElementById('rewards-widget')?.addEventListener('click', () => routeTo('rewards'));
 
-// Demo Login
-document.getElementById('btn-demo-login')?.addEventListener('click', () => {
-  isDemo = true;
-  userProfile.name = 'Demo User';
-  userProfile.email = 'demo@projectorion.test';
-  userProfile.balance = 1000;
-  userProfile.saving_balance = 0;
-  showOnboarding();
-});
-
 // Auth Switch Listeners
 document.getElementById('go-register')?.addEventListener('click', showRegister);
 document.getElementById('go-login')?.addEventListener('click', showLogin);
@@ -1517,9 +1454,7 @@ document.getElementById('register-form')?.addEventListener('submit', async (e) =
 btn.addEventListerner("click", setSpendingLimits);*/
 // Logout Listener
 document.getElementById('btn-logout')?.addEventListener('click', async () => {
-  isDemo = false;
   await supabase.auth.signOut();
-  // onAuthStateChange SIGNED_OUT resets userProfile and calls showLogin()
 });
 
 // Financial Listeners
@@ -1655,11 +1590,6 @@ document.getElementById('onboarding-form')?.addEventListener('submit', async (e)
     others: spent * 0.2
   };
 
-  if (isDemo) {
-    routeTo('home');
-    return;
-  }
-
   if (!userProfile.id) {
     alert('Session expired. Please log in again.');
     showLogin();
@@ -1715,7 +1645,7 @@ document.getElementById('update-financials-form')?.addEventListener('submit', as
     others: newDefaultDailyLimit * 0.20
   };
 
-  if (!isDemo && userProfile.id) {
+  if (userProfile.id) {
     const { error } = await supabase.from('profiles').update({
       age_range: ageVal,
       monthly_income: salaryVal,
@@ -1763,7 +1693,7 @@ document.getElementById('spending-limit-form')?.addEventListener('submit', async
     others: newLimit * 0.20
   };
 
-  if (!isDemo && userProfile.id) {
+  if (userProfile.id) {
     const { error } = await supabase
       .from('profiles')
       .update({ daily_spending_limit: newLimit })
@@ -1781,7 +1711,7 @@ document.getElementById('spending-limit-form')?.addEventListener('submit', async
 });
 
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && userProfile.id && !isDemo) {
+  if (!document.hidden && userProfile.id) {
     updateDashboard();
   }
 });
