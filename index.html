@@ -6,11 +6,6 @@
   <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#8B1A8B" />
-  <link rel="manifest" href="./manifest.json" />
-  <link rel="apple-touch-icon" href="./logo.png" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Orion" />
   <link rel="stylesheet" href="./style.css" />
   <title>Project Orion — Smart Finance</title>
   <meta name="description"
@@ -23,11 +18,8 @@
 </head>
 
 <body>
-  <div id="loading-screen">
-    <img src="./logo.png" alt="GXBank" class="loading-logo" />
-  </div>
-
   <div id="app">
+    <!-- Auth Views -->
     <div id="login-view" class="auth-container" style="display: none;">
       <div class="auth-box">
         <h2>Welcome Back</h2>
@@ -63,6 +55,7 @@
       </div>
     </div>
 
+    <!-- Onboarding Guide View -->
     <div id="onboarding-view" class="auth-container" style="display: none;">
       <div class="auth-box">
         <h2>Welcome to Orion!</h2>
@@ -70,20 +63,25 @@
           Let's set up your profile to give you the best financial recommendations.
         </p>
         <form id="onboarding-form" class="auth-form">
-          <select id="onboarding-age" class="auth-input" required style="appearance: none; background: rgba(0,0,0,0.2);">
-            <option value="" disabled selected>Select Age Range</option>
-            <option value="under_20">Under 20</option>
-            <option value="20_25">20 - 25</option>
-            <option value="26_30">26 - 30</option>
-            <option value="31_40">31 - 40</option>
-            <option value="above_40">Above 40</option>
-          </select>
+          <div class="custom-select-wrapper" id="onboarding-age-wrapper">
+            <div class="custom-select-trigger auth-input">Select Age Range</div>
+            <div class="custom-options">
+              <div class="custom-option" data-value="under_20">Under 20</div>
+              <div class="custom-option" data-value="20_25">20 - 25</div>
+              <div class="custom-option" data-value="26_30">26 - 30</div>
+              <div class="custom-option" data-value="31_40">31 - 40</div>
+              <div class="custom-option" data-value="above_40">Above 40</div>
+            </div>
+            <input type="hidden" id="onboarding-age" required>
+          </div>
+
           <input type="number" id="onboarding-salary" class="auth-input" placeholder="Exact Monthly Salary (RM)" min="1" step="0.01" required>
           <button type="submit" class="auth-btn">Complete Setup</button>
         </form>
       </div>
     </div>
 
+    <!-- Main App View -->
     <div id="main-view" style="display: none;">
       <nav class="top-nav" id="top-nav">
         <div class="brand" id="nav-brand" style="cursor: pointer;">
@@ -153,9 +151,10 @@
         </div>
       </nav>
 
+      <!-- Pages -->
       <div id="page-home" class="page-container" style="display: none;">
         <div class="notice-bar" id="notice-bar" style="cursor:pointer;">
-          <span id="notice-bar-star" style="font-size: 1rem; line-height: 1; display:inline-block;">✦</span>
+          <span style="font-size: 1rem; line-height: 1;">✦</span>
           <span id="notice-bar-text">Checking your spending habits...</span>
         </div>
 
@@ -225,7 +224,7 @@
               </div>
             </div>
 
-            <div class="widget mo-5">
+            <div class="widget mo-3">
               <div class="widget-header-tabs">
                 <h3 class="widget-title">Recent Activity</h3>
                 <div class="activity-tabs">
@@ -383,7 +382,7 @@
               </div>
             </div>
 
-            <div class="widget mo-3" id="discover-widget">
+            <div class="widget mo-5" id="discover-widget">
               <h3 class="widget-title" style="margin-bottom: 1.5rem;">Discover</h3>
               <div class="discover-section">
                 <h4>Learn</h4>
@@ -422,37 +421,33 @@
                 <h3 class="widget-title" style="margin: 0;">Rewards & Missions</h3>
               </div>
 
-              <div class="rw-stats-row">
-                <div class="rw-stat-item">
-                  <div class="rw-stat-icon accent-purple">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                      <polyline points="17 6 23 6 23 12"></polyline>
+              <div class="gift-boxes" id="home-gift-boxes">
+                <div class="gift-box">
+                  <span class="gift-icon">🎁</span>
+                  <span class="gift-label">In progress</span>
+                </div>
+                <div class="gift-box">
+                  <span class="gift-icon">🎁</span>
+                  <span class="gift-label">In progress</span>
+                </div>
+                <div class="gift-box">
+                  <span class="gift-icon">🎁</span>
+                  <span class="gift-label">In progress</span>
+                </div>
+              </div>
+
+              <div class="rewards-list">
+                <div class="reward-card">
+                  <div class="reward-icon purple">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                   </div>
-                  <div class="rw-stat-body">
-                    <span class="rw-stat-value" id="home-streak-val">0 Days</span>
-                    <span class="rw-stat-label">Streak</span>
-                  </div>
-                </div>
-                <div class="rw-stat-divider"></div>
-                <div class="rw-stat-item">
-                  <img id="home-badge-img" src="assets/badges/b1.svg" alt="Current Badge" width="48" height="48" style="object-fit: contain;">
-                  <div class="rw-stat-body">
-                    <span class="rw-stat-value" id="home-badge-name">No Money No Talk</span>
-                    <span class="rw-stat-label">Badge</span>
-                  </div>
-                </div>
-                <div class="rw-stat-divider"></div>
-                <div class="rw-stat-item">
-                  <div class="rw-stat-icon accent-cyan">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                    </svg>
-                  </div>
-                  <div class="rw-stat-body">
-                    <span class="rw-stat-value" id="home-total-xp">0 XP</span>
-                    <span class="rw-stat-label">Total Score</span>
+                  <div class="reward-info">
+                    <h4>Refer a friend</h4>
+                    <p>Refer & earn rewards up to 225 XP. Unlimited...</p>
+                    <span class="time-left">57 days left</span>
                   </div>
                 </div>
               </div>
@@ -523,16 +518,21 @@
                 </div>
                 <div id="rank-row" class="rw-badges-row">
                   <span class="material-symbols-outlined" id="rank_icon">leaderboard</span>
-                  <div>
-                    <p style="margin:0 0 4px;">You're ahead of <span id="rank">—</span>% of all users.</p>
-                    <p style="margin:0; font-size:0.85rem; color:var(--text-secondary);">Rank <span id="rank_position" style="color:#fff; font-weight:600;">—</span> out of <span id="total_users" style="color:#fff; font-weight:600;">—</span> users</p>
-                  </div>
+                  <p>I am <span id="rank">1 th</span> out of <span id="total_users">10</span> total users.</p>
                 </div>
                 <div id="all-badges" style="display: none;"></div>
               </div>
             </div>
             <div class="rw-missions-col">
               <div class="rw-mission-card">
+                <div class="rw-mission-icon">
+                  <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                </div>
                 <div class="rw-mission-icon">
                   <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -622,6 +622,7 @@
           </div>
 
           <div class="financial-details-grid">
+            <!-- Spending Detail -->
             <div class="detail-card">
               <h2 class="section-heading">Detailed Daily Spendings</h2>
               <div class="spending-analysis">
@@ -681,6 +682,7 @@
               </div>
             </div>
 
+            <!-- Savings Detail -->
             <div class="detail-card">
               <h2 class="section-heading">Savings Progress</h2>
               <div class="jar-visual-container large">
@@ -863,50 +865,59 @@
     </div>
   </div>
 
+  <!-- Modals -->
   <div id="modal-container" class="modal-overlay" style="display: none;">
+    <!-- Add Money Modal -->
     <div id="modal-add-money" class="modal-content auth-box" style="display: none;">
       <h2>Add Money</h2>
       <form id="add-money-form" class="auth-form">
         <input type="number" id="add-amount" class="auth-input" placeholder="Amount (RM)" step="0.01" min="0.01" required>
-        <select id="bank-select" class="auth-input" required style="appearance: none; background: rgba(0,0,0,0.2);">
-          <option value="" disabled selected>Select Bank</option>
-          <option value="maybank">Maybank2u</option>
-          <option value="cimb">CIMB Clicks</option>
-          <option value="pbb">Public Bank</option>
-          <option value="rhb">RHB Now</option>
-          <option value="hongleong">Hong Leong Bank</option>
-          <option value="ambank">AmBank</option>
-          <option value="bankislam">Bank Islam</option>
-          <option value="bsn">BSN</option>
-          <option value="uob">UOB Malaysia</option>
-          <option value="ocbc">OCBC Bank</option>
-          <option value="hsbc">HSBC Malaysia</option>
-          <option value="tng">Touch 'n Go eWallet</option>
-          <option value="ryt">Ryt Bank</option>
-        </select>
+        <div class="custom-select-wrapper" id="bank-select-wrapper">
+          <div class="custom-select-trigger auth-input">Select Bank</div>
+          <div class="custom-options">
+            <div class="custom-option" data-value="maybank">Maybank2u</div>
+            <div class="custom-option" data-value="cimb">CIMB Clicks</div>
+            <div class="custom-option" data-value="pbb">Public Bank</div>
+            <div class="custom-option" data-value="rhb">RHB Now</div>
+            <div class="custom-option" data-value="hongleong">Hong Leong Bank</div>
+            <div class="custom-option" data-value="ambank">AmBank</div>
+            <div class="custom-option" data-value="bankislam">Bank Islam</div>
+            <div class="custom-option" data-value="bsn">BSN</div>
+            <div class="custom-option" data-value="uob">UOB Malaysia</div>
+            <div class="custom-option" data-value="ocbc">OCBC Bank</div>
+            <div class="custom-option" data-value="hsbc">HSBC Malaysia</div>
+            <div class="custom-option" data-value="tng">Touch 'n Go eWallet</div>
+            <div class="custom-option" data-value="ryt">Ryt Bank</div>
+          </div>
+          <input type="hidden" id="bank-select" required>
+        </div>
         <button type="submit" class="auth-btn">Proceed to Bank</button>
         <button type="button" class="auth-btn secondary-btn close-modal"
           style="background: var(--bg-panel-light); margin-top: 8px;">Cancel</button>
       </form>
     </div>
 
+    <!-- Send Money Modal -->
     <div id="modal-send-money" class="modal-content auth-box" style="display: none;">
       <h2>Send Money</h2>
       <form id="send-money-form" class="auth-form">
         <input type="email" id="send-email" class="auth-input" placeholder="Recipient Email" required>
         <input type="number" id="send-amount" class="auth-input" placeholder="Amount (RM)" step="0.01" min="0.01" required>
-        <select id="send-category" class="auth-input" required style="appearance: none; background: rgba(0,0,0,0.2);">
-          <option value="" disabled selected>Select Category</option>
-          <option value="food">Food and Beverage</option>
-          <option value="transport">Transport</option>
-          <option value="entertainment">Entertainment</option>
-          <option value="grocery">Grocery</option>
-          <option value="garment">Garment</option>
-          <option value="telco">Telco</option>
-          <option value="insurance">Insurance</option>
-          <option value="education">Education</option>
-          <option value="others">Others</option>
-        </select>
+        <div class="custom-select-wrapper" id="send-category-wrapper">
+          <div class="custom-select-trigger auth-input">Select Category</div>
+          <div class="custom-options">
+            <div class="custom-option" data-value="food">Food and Beverage</div>
+            <div class="custom-option" data-value="transport">Transport</div>
+            <div class="custom-option" data-value="entertainment">Entertainment</div>
+            <div class="custom-option" data-value="grocery">Grocery</div>
+            <div class="custom-option" data-value="garment">Garment</div>
+            <div class="custom-option" data-value="telco">Telco</div>
+            <div class="custom-option" data-value="insurance">Insurance</div>
+            <div class="custom-option" data-value="education">Education</div>
+            <div class="custom-option" data-value="others">Others</div>
+          </div>
+          <input type="hidden" id="send-category" required>
+        </div>
         <button type="submit" class="auth-btn">Send Now</button>
         <button type="button" class="auth-btn secondary-btn close-modal"
           style="background: var(--bg-panel-light); margin-top: 8px;">Cancel</button>
@@ -914,6 +925,7 @@
       <div id="send-money-error" class="error-msg"></div>
     </div>
 
+    <!-- Save Money Modal -->
     <div id="modal-save-money" class="modal-content auth-box" style="display: none;">
       <h2>Save to Jar</h2>
       <form id="save-money-form" class="auth-form">
@@ -927,6 +939,7 @@
       <div id="save-money-error" class="error-msg"></div>
     </div>
 
+    <!-- Withdraw Money Modal -->
     <div id="modal-withdraw-money" class="modal-content auth-box" style="display: none;">
       <h2>Withdraw from Jar</h2>
       <form id="withdraw-money-form" class="auth-form">
@@ -940,6 +953,7 @@
       <div id="withdraw-money-error" class="error-msg"></div>
     </div>
 
+    <!-- Confirm Withdraw Modal -->
     <div id="modal-confirm-withdraw" class="modal-content auth-box" style="display: none;">
       <h2>Confirm Withdraw</h2>
       <p id="confirm-withdraw-text" style="color: var(--text-secondary); margin-bottom: 1.5rem;"></p>
@@ -949,6 +963,7 @@
       </div>
     </div>
 
+    <!-- Modal Edit Modal -->
     <div id="modal-edit-goal" class="modal-content auth-box" style="display: none;">
       <h2>Set Savings Goal</h2>
       <form id="edit-goal-form" class="auth-form">
@@ -961,26 +976,31 @@
       </form>
     </div>
 
+    <!-- Update Financials Modal -->
     <div id="modal-update-financials" class="modal-content auth-box" style="display: none;">
       <h2>Financial Profile</h2>
       <form id="update-financials-form" class="auth-form">
         <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
           Update your details to refine your savings goals and budgets.
         </p>
-        <select id="update-age" class="auth-input" required style="appearance: none; background: rgba(0,0,0,0.2);">
-          <option value="" disabled selected>Select Age Range</option>
-          <option value="under_20">Under 20</option>
-          <option value="20_25">20 - 25</option>
-          <option value="26_30">26 - 30</option>
-          <option value="31_40">31 - 40</option>
-          <option value="above_40">Above 40</option>
-        </select>
+        <div class="custom-select-wrapper" id="update-age-wrapper">
+          <div class="custom-select-trigger auth-input">Select Age Range</div>
+          <div class="custom-options">
+            <div class="custom-option" data-value="under_20">Under 20</div>
+            <div class="custom-option" data-value="20_25">20 - 25</div>
+            <div class="custom-option" data-value="26_30">26 - 30</div>
+            <div class="custom-option" data-value="31_40">31 - 40</div>
+            <div class="custom-option" data-value="above_40">Above 40</div>
+          </div>
+          <input type="hidden" id="update-age" required>
+        </div>
         <input type="number" id="update-salary" class="auth-input" placeholder="Exact Monthly Salary (RM)" min="1" step="0.01" required>
         <button type="submit" class="auth-btn">Save Changes</button>
         <button type="button" class="auth-btn secondary-btn close-modal" style="background: var(--bg-panel-light); margin-top: 8px;">Cancel</button>
       </form>
     </div>
 
+    <!-- Customize Daily Spending Limit Modal -->
     <div id="modal-spending-limit" class="modal-content auth-box" style="display: none;">
       <h2>Set Daily Limit</h2>
       <form id="spending-limit-form" class="auth-form">
@@ -993,6 +1013,7 @@
       </form>
     </div>
 
+    <!-- QR Scanner Modal -->
     <div id="modal-scan-qr" class="modal-content auth-box" style="display: none;">
       <h2>Scan QR</h2>
       <div class="qr-placeholder"
@@ -1009,6 +1030,7 @@
       <button type="button" class="auth-btn close-modal">Close Scanner</button>
     </div>
 
+    <!--ETF Modal -->
     <div id="modal-discover-etf" class="modal-content auth-box" style="display: none;">
       <h2 style="margin-bottom: 1rem;">Trending ETFs</h2>
       <div style="overflow-x: auto; margin-bottom: 1rem;">
@@ -1078,6 +1100,7 @@
 
   </div>
 
+  <!-- AI Chat Window -->
   <div id="ai-chat-overlay" class="ai-chat-overlay" style="display:none;">
     <div class="ai-chat-window">
       <div class="ai-chat-header">
@@ -1088,6 +1111,7 @@
         <button id="ai-chat-close" class="ai-chat-close" aria-label="Close chat">✕</button>
       </div>
       <div id="ai-chat-messages" class="ai-chat-messages">
+        <div class="ai-chat-bubble ai">Aiyah, you finally opened me! Ask me anything about your spending lah.</div>
       </div>
       <div class="ai-chat-input-row">
         <input id="ai-chat-input" class="ai-chat-input" type="text" placeholder="Ask Orion AI..." maxlength="300" />
@@ -1097,6 +1121,7 @@
   </div>
 
   <script type="module" src="./script.js"></script>
+  <!-- BADGES POPUP -->
 <div id="badges-popup-overlay" class="badges-popup-overlay" style="display:none;">
 
   <div class="badges-popup">
