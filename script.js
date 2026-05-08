@@ -1279,9 +1279,7 @@ function initWaveAnimation(selector) {
   canvas.width = container.clientWidth;
   canvas.height = container.clientHeight;
   const ctx = canvas.getContext('2d');
-
-  const monthlyBudget = userProfile.monthly_income - userProfile.savings_goal;
-  const dailyLimit = monthlyBudget / 30;
+  const dailyLimit = userProfile.daily_spending_limit || ((userProfile.monthly_income - userProfile.savings_goal) / 30);
   const remainingToday = dailyLimit - userProfile.spent_today;
   const spentPercentage = Math.min(100, (userProfile.spent_today / dailyLimit) * 100);
   if (spentPercentage > 100) {
@@ -1295,7 +1293,6 @@ function initWaveAnimation(selector) {
 
   console.log("monthly income:" + userProfile.monthly_income);
   console.log("saving goals:" + userProfile.savings_goal);
-  console.log("monthlyBudget:" + monthlyBudget);
   console.log("dailyLimit" + dailyLimit);
   console.log("spent_today" + userProfile.spent_today);
 
