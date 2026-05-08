@@ -450,6 +450,7 @@ async function checkOnboardingAndRoute() {
     // age_range is NULL/empty until the onboarding form is submitted
     if (profile && profile.age_range) {
       routeTo('home');
+      await syncUserData();
       await checkDailyLoginBonus();
     } else {
       showOnboarding();
