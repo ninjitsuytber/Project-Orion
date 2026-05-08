@@ -1242,7 +1242,6 @@ function initWaveAnimation(selector) {
 
   console.log("monthly income:" + userProfile.monthly_income);
   console.log("saving goals:" + userProfile.savings_goal);
-  console.log("monthlyBudget:" + monthlyBudget);
   console.log("dailyLimit" + dailyLimit);
   console.log("spent_today" + userProfile.spent_today);
 
