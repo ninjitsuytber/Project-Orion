@@ -418,18 +418,30 @@ async function renderApp() {
 async function checkDailyLoginBonus() {
   if (isDemo || !userProfile.id) return;
   try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const { data } = await supabase
-      .from('app_activities')
-      .select('id')
-      .eq('user_id', userProfile.id)
-      .eq('activity_name', 'Daily Login')
-      .gte('created_at', today.toISOString())
-      .limit(1);
+    const { data, error } = await supabase.rpc('daily_login_checkin');
+    if (error || !data || !data.success) return;
 
-    if (!data || data.length === 0) {
-      await addXP(10, 'Daily Login');
+    userProfile.streak = data.streak;
+
+    if (data.is_new) {
+      const oldTier = userProfile.tier;
+      userProfile.xp = data.xp;
+      userProfile.tier = calculateTier(userProfile.xp);
+
+      const newBadges = BADGES.filter(b => b.tierRequired > oldTier && b.tierRequired <= userProfile.tier);
+      for (const badge of newBadges) {
+        await supabase.from('user_badges').upsert(
+          { user_id: userProfile.id, badge_id: badge.id },
+          { onConflict: ['user_id', 'badge_id'] }
+        );
+        if (!userProfile.badges.includes(badge.id)) userProfile.badges.push(badge.id);
+      }
+      if (newBadges.length > 0) {
+        await supabase.from('user_progress').update({ tier: userProfile.tier }).eq('user_id', userProfile.id);
+      }
+
+      renderAllBadges();
+      renderBadgePreview();
     }
   } catch (err) {
     console.error('Daily login bonus error:', err);
