@@ -20,7 +20,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-GOOGLE_API_KEY = "AIzaSyAyyJwQDn8HXXqaWb2KlXFMSwO4cstbEtY"
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 GEMINI_MODEL = "gemini-3.1-flash-lite-preview"
 GEMINI_FALLBACK_MODEL = "gemini-2.5-flash"
 GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/openai"
