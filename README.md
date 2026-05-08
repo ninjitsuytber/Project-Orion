@@ -559,6 +559,16 @@ docker run -p 8080:8080 --env-file .env orion-backend
 
 ---
 
+## Star History
+
+<a href="https://www.star-history.com/?repos=ninjitsuytber%2FProject-Orion&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=ninjitsuytber/Project-Orion&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=ninjitsuytber/Project-Orion&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=ninjitsuytber/Project-Orion&type=date&legend=top-left" />
+ </picture>
+</a>
+
 ## Authors
 
 | Rank | Author | Contribution |
