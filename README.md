@@ -1,11 +1,26 @@
 # Project Orion
 
+<img width="632" height="395" alt="image" src="https://github.com/user-attachments/assets/913806a9-2e94-4cf3-b2f4-18107e4d3e2d" />
+
 **AI-powered financial literacy platform designed to guide Malaysian youth toward long-term financial wellbeing.**
+
+---
+
+## Android App Installation
+
+Project Orion is now available as a native Android application! Download and install the APK directly on your Android device.
+
+
+[![Download APK](https://img.shields.io/badge/Download-Orion.apk-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://drive.google.com/file/d/1MkOXimnvQmjjsPV5VAaw87xUXl5yev3e/view?usp=sharing)
+
+
+> We support direct Android App Installation — no Play Store required. Enable **Install from Unknown Sources** in your Android settings, then open the downloaded APK to install.
 
 ---
 
 ## Table of Contents
 
+- [Android App Installation](#android-app-installation)
 - [The Problem](#the-problem)
 - [Our Solution](#our-solution)
 - [Core Features](#core-features)
