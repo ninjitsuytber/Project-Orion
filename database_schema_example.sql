@@ -370,3 +370,85 @@ $$;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+
+-- Drop old trigger/function if they exist                                                                                          
+  DROP TRIGGER IF EXISTS sync_xp_to_profile ON public.user_progress;
+  DROP FUNCTION IF EXISTS public.sync_xp_to_profile();                                                                                
+                                                                                                                                      
+  -- Auto-sync profiles.xp whenever user_progress.xp changes
+  CREATE OR REPLACE FUNCTION public.sync_xp_to_profile()
+  RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+  BEGIN
+      UPDATE public.profiles SET xp = NEW.xp WHERE id = NEW.user_id;
+      RETURN NEW;
+  END;
+  $$;
+
+  CREATE TRIGGER sync_xp_to_profile
+      AFTER INSERT OR UPDATE OF xp ON public.user_progress
+      FOR EACH ROW EXECUTE FUNCTION public.sync_xp_to_profile();
+
+  -- One-time fix: sync any existing mismatches
+  UPDATE public.profiles p
+  SET xp = up.xp
+  FROM public.user_progress up
+  WHERE p.id = up.user_id;
+
+
+
+  DROP FUNCTION IF EXISTS public.daily_login_checkin();                                                                                 
+  CREATE OR REPLACE FUNCTION public.daily_login_checkin()                                                                             
+  RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER AS $$      
+  DECLARE                                                                                                                             
+      v_user_id        UUID    := auth.uid();
+      v_today          DATE    := CURRENT_DATE;
+      v_yesterday      DATE    := CURRENT_DATE - INTERVAL '1 day';
+      v_already_done   BOOLEAN;
+      v_was_yesterday  BOOLEAN;
+      v_new_streak     INTEGER;
+      v_new_xp         INTEGER;
+  BEGIN
+      IF v_user_id IS NULL THEN
+          RETURN json_build_object('success', false, 'message', 'Not authenticated');
+      END IF;
+
+      SELECT EXISTS(
+          SELECT 1 FROM public.app_activities
+          WHERE user_id = v_user_id
+            AND activity_name = 'Daily Login'
+            AND created_at::DATE = v_today
+      ) INTO v_already_done;
+
+      IF v_already_done THEN
+          SELECT p.streak, up.xp INTO v_new_streak, v_new_xp
+          FROM public.profiles p
+          JOIN public.user_progress up ON up.user_id = p.id
+          WHERE p.id = v_user_id;
+          RETURN json_build_object('success', true, 'is_new', false, 'streak', v_new_streak, 'xp', v_new_xp);
+      END IF;
+
+      SELECT EXISTS(
+          SELECT 1 FROM public.app_activities
+          WHERE user_id = v_user_id
+            AND activity_name = 'Daily Login'
+            AND created_at::DATE = v_yesterday
+      ) INTO v_was_yesterday;
+
+      IF v_was_yesterday THEN
+          UPDATE public.profiles SET streak = streak + 1 WHERE id = v_user_id RETURNING streak INTO v_new_streak;
+      ELSE
+          UPDATE public.profiles SET streak = 1 WHERE id = v_user_id RETURNING streak INTO v_new_streak;
+      END IF;
+
+      UPDATE public.user_progress
+      SET xp = xp + 10, updated_at = now()
+      WHERE user_id = v_user_id
+      RETURNING xp INTO v_new_xp;
+
+      INSERT INTO public.app_activities (user_id, activity_name, xp_earned)
+      VALUES (v_user_id, 'Daily Login', 10);
+
+      RETURN json_build_object('success', true, 'is_new', true, 'streak', v_new_streak, 'xp', v_new_xp);
+  END;
+  $$;
